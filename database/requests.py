@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
-from database.models import Item, Banner, Category
+from database.models import Item, Banner, Category, SubCategory
 
 
 ################### BANNER REQUESTS ####################
@@ -52,19 +52,36 @@ async def orm_get_categories(session: AsyncSession):
 ########################################################
 
 
+################### SUB_CATEGORY REQUESTS ####################
+async def orm_create_sub_categories(session: AsyncSession, sub_categories: list):
+    query = select(SubCategory)
+    result = await session.execute(query)
+    if result.first():
+        return
+    session.add_all([SubCategory(name=name) for name in sub_categories])
+    await session.commit()
+
+
+async def orm_get_sub_categories(session: AsyncSession, category_id):
+    query = select(SubCategory).where(SubCategory.category_id == int(category_id))
+    result = await session.execute(query)
+    return result.scalars().all()
+########################################################
+
+
 ################### ITEM REQUESTS ####################
 async def orm_add_item(session: AsyncSession, data: dict):
     obj = Item(
         item_media=data["item_media"],
         media_text=data["media_text"],
-        category_id=int(data["category"]),
+        category_id=int(data["category_id"]),
     )
     session.add(obj)
     await session.commit()
 
 
-async def orm_get_items(session: AsyncSession, category_id):
-    query = select(Item).where(Item.category_id == int(category_id))
+async def orm_get_items(session: AsyncSession, sub_category_id):
+    query = select(Item).where(Item.sub_category_id == int(sub_category_id))
     result = await session.execute(query)
     return result.scalars().all()
 

@@ -28,15 +28,28 @@ class Category(Base):
 ###############################################
 
 
+################ CATEGORY MODELS ################
+class SubCategory(Base):
+    __tablename__ = 'sub_category'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey(
+        'sub_category.id', ondelete='CASCADE'), nullable=False)
+
+    category: Mapped['Category'] = relationship(backref='sub_category')
+###############################################
+
+
 ################ ITEM MODELS ################
 class Item(Base):
     __tablename__ = 'item'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    item_media: Mapped[str] = mapped_column(Text, nullable=True)
+    item_media: Mapped[str] = mapped_column(String(150), nullable=True)
     media_text: Mapped[str] = mapped_column(Text, nullable=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey(
-        'category.id', ondelete='CASCADE'), nullable=False)
+    sub_category_id: Mapped[int] = mapped_column(ForeignKey(
+        'sub_category.id', ondelete='CASCADE'), nullable=False)
 
-    category: Mapped['Category'] = relationship(backref='item')
+    sub_category: Mapped['SubCategory'] = relationship(backref='item')
 ###############################################

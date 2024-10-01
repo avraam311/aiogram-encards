@@ -41,7 +41,7 @@ async def nth(message: Message) -> None:
 async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
     category_id = callback.data.split('_')[-1]
     for item in await orm_get_items(session, int(category_id)):
-        await callback.message.answer_media_group(
+        await callback.message.answer_document(
             item.item_media,
             caption=f"<strong>{item.media_text}</strong>\n",
             reply_markup=get_inline_keyboard(
@@ -217,7 +217,7 @@ async def category_choice(callback: CallbackQuery, state: FSMContext,
     if int(callback.data) in [listening_category.id for listening_category in
                               await orm_get_categories(session)]:
         await callback.answer()
-        await state.update_data(listening_category_id=callback.data)
+        await state.update_data(category_id=callback.data)
         await callback.message.answer('Отправьте медиа', reply_markup=kb.admin_back_cancel)
     else:
         await callback.message.answer('Выберите категорию из кнопок')
@@ -233,19 +233,19 @@ async def error(message: Message):
 category_filter = AddItem.category_filter
 
 
-@admin_router.message(AddItem.item_media, or_f(F.photo, F.text == "."))
+@admin_router.message(AddItem.item_media, or_f(F.video, F.text == "."))
 async def add_item_media(message: Message, state: FSMContext) -> None:
-    if AddItem.category_filter == 'photo':
-        if message.text and message.text == ".":
-            await state.update_data(item_media=AddItem.item_for_change.item_media)
-        elif message.photo:
-            await state.update_data(item_media=message.photo[-1].file_id)
-
-    elif AddItem.category_filter == 'video':
-        if message.text and message.text == ".":
-            await state.update_data(item_media=AddItem.item_for_change.item_media)
-        else:
-            await state.update_data(item_media=message.video[-1].file_id)
+    # if AddItem.category_filter == 'photo':
+    #     if message.text and message.text == ".":
+    #         await state.update_data(item_media=AddItem.item_for_change.item_media)
+    #     elif message.photo:
+    #         await state.update_data(item_media=message.photo[-1].file_id)
+    #
+    # elif AddItem.category_filter == 'video':
+    if message.text and message.text == ".":
+        await state.update_data(item_media=AddItem.item_for_change.item_media)
+    else:
+        await state.update_data(item_media=message.video.file_id)
 
     await message.answer(
         'Отправьте текст к медиа',
