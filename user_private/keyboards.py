@@ -7,6 +7,7 @@ class MenuCB(CallbackData, prefix="menu"):
     level: int
     menu_name: str
     category: int | None = None
+    sub_category: int | None = None
     page: int = 1
     item_id: int | None = None
 
@@ -14,15 +15,12 @@ class MenuCB(CallbackData, prefix="menu"):
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
     btns = {
-        "Изучение слов": 'words',
-        "Аудирование": 'listening',
-        "Говорение": 'speaking',
-        "Чтение": 'reading',
-        "Письмо": 'writing',
+        "Изучать": 'learn',
+        "Прочитать!": 'read!',
         "Спец. пакет": 'spec_pack',
     }
     for text, menu_name in btns.items():
-        if menu_name in ['words', 'listening', 'speaking', 'reading', 'writing', 'spec_pack']:
+        if menu_name in ['learn']:
             keyboard.add(InlineKeyboardButton(text=text,
                                               callback_data=MenuCB(level=level+1, menu_name=menu_name).pack()))
         else:
@@ -46,10 +44,27 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
     return keyboard.adjust(*sizes).as_markup()
 
 
+def get_user_sub_catalog_btns(*, level: int, sub_categories: list, sizes: tuple[int] = (2,)):
+    keyboard = InlineKeyboardBuilder()
+
+    for i in sub_categories:
+        keyboard.add(InlineKeyboardButton(text=i.name,
+                                          callback_data=MenuCB(level=level + 1, menu_name=i.name,
+                                                               sub_category=i.id).pack()))
+
+    keyboard.add(InlineKeyboardButton(text='Назад',
+                                      callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
+    keyboard.add(InlineKeyboardButton(text='На главную',
+                                      callback_data=MenuCB(level=0, menu_name='main').pack()))
+
+    return keyboard.adjust(*sizes).as_markup()
+
+
 def get_items_btns(
         *,
         level: int,
         category: int,
+        sub_categories: int,
         page: int,
         pagination_btns: dict,
         sizes: tuple[int] = (2, 1)
