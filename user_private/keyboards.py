@@ -15,12 +15,12 @@ class MenuCB(CallbackData, prefix="menu"):
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
     btns = {
-        "Изучать": 'learn',
+        "Изучать": 'catalog',
         "Прочитать!": 'read!',
         "Спец. пакет": 'spec_pack',
     }
     for text, menu_name in btns.items():
-        if menu_name in ['learn']:
+        if menu_name in ['catalog']:
             keyboard.add(InlineKeyboardButton(text=text,
                                               callback_data=MenuCB(level=level+1, menu_name=menu_name).pack()))
         else:

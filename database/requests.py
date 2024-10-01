@@ -63,10 +63,17 @@ async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict)
     await session.commit()
 
 
-async def orm_get_sub_categories(session: AsyncSession, category_id: tuple = (2, 3, 4, 5)):
-    query = select(SubCategory).where(SubCategory.category_id in category_id)
+async def orm_get_sub_categories_user(session: AsyncSession, category_id):
+    query = select(SubCategory).where(SubCategory.category_id == int(category_id))
     result = await session.execute(query)
     return result.scalars().all()
+
+
+async def orm_get_sub_categories_admin(session: AsyncSession):
+    query = select(SubCategory)
+    result = await session.execute(query)
+    return result.scalars().all()
+
 ########################################################
 
 

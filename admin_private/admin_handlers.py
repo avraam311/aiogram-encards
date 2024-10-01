@@ -10,7 +10,7 @@ from admin_private import admin_keyboards as kb
 from common.filters import IsAdmin
 from database.requests import (orm_add_item, orm_get_item, orm_get_items, orm_delete_item,
                                orm_update_item, orm_get_info_pages, orm_change_banner_image,
-                               orm_get_sub_categories)
+                               orm_get_sub_categories_admin)
 from common.get_keyboard_func import get_inline_keyboard
 
 admin_router = Router()
@@ -24,7 +24,7 @@ async def admin_features(message: Message):
 
 @admin_router.message(F.text == 'Просмотреть')
 async def admin_features(message: Message, session: AsyncSession):
-    sub_categories = await orm_get_sub_categories(session)
+    sub_categories = await orm_get_sub_categories_admin(session)
     btns = {sub_category.name: f'sub_category_{sub_category.id}' for sub_category in sub_categories}
     await message.answer("Выберите подподкатегорию", reply_markup=get_inline_keyboard(btns=btns))
 
@@ -154,12 +154,11 @@ async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session
 @admin_router.message(StateFilter(None), F.text == 'Добавить медиа')
 async def add_item(message: Message, state: FSMContext, session: AsyncSession):
     await state.set_state(AddItem.item_media)
-
     await message.answer(
         'Выберите...',
         reply_markup=kb.admin_back_cancel,
     )
-    sub_categories = await orm_get_sub_categories(session)
+    sub_categories = await orm_get_sub_categories_admin(session)
     btns = {sub_category.name: str(sub_category.id) for sub_category in sub_categories}
     await message.answer("...подкатегорию",
                          reply_markup=get_inline_keyboard(btns=btns))
@@ -215,7 +214,7 @@ async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
         AddItem.sub_category_filter = F.photo
 
     if int(callback.data) in [sub_category.id for sub_category in
-                              await orm_get_sub_categories(session)]:
+                              await orm_get_sub_categories_admin(session)]:
         await callback.answer()
         await state.update_data(sub_category_id=callback.data)
         await callback.message.answer('Отправьте медиа', reply_markup=kb.admin_back_cancel)

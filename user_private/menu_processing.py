@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import InputMediaDocument, InputMediaPhoto
 
 from database.requests import (orm_get_banner, orm_get_categories,
-                               orm_get_sub_categories, orm_get_items)
+                               orm_get_sub_categories_user, orm_get_items)
 
 from user_private.keyboards import (get_user_main_btns, get_user_catalog_btns,
                                     get_user_sub_catalog_btns, get_items_btns)
@@ -44,7 +44,7 @@ async def f_sub_catalog(session, level, category, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    sub_categories = await orm_get_sub_categories(session, category_id=category)
+    sub_categories = await orm_get_sub_categories_user(session, category_id=category)
     kbds = get_user_sub_catalog_btns(level=level, sub_categories=sub_categories)
 
     return image, kbds
@@ -86,6 +86,6 @@ async def get_menu_content(
     elif level == 1:
         return await f_catalog(session, level, menu_name)
     elif level == 2:
-        return await f_sub_catalog(session, level, category, page)
+        return await f_sub_catalog(session, level, category, "sub_catalog")
     elif level == 3:
         return await f_items(session, level, sub_category, page)

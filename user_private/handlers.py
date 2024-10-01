@@ -32,6 +32,7 @@ async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: Asy
         level=callback_data.level,
         menu_name=callback_data.menu_name,
         category=callback_data.category,
+        sub_category=callback_data.sub_category,
         page=callback_data.page,
     )
 
