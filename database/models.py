@@ -35,7 +35,7 @@ class SubCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey(
-        'sub_category.id', ondelete='CASCADE'), nullable=False)
+        'category.id', ondelete='CASCADE'), nullable=False)
 
     category: Mapped['Category'] = relationship(backref='sub_category')
 ###############################################

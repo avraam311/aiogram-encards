@@ -2,8 +2,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aiogram.types import InputMediaDocument, InputMediaPhoto
 
-from database.requests import orm_get_banner, orm_get_categories, orm_get_items
-from user_private.keyboards import get_user_main_btns, get_user_catalog_btns, get_items_btns
+from database.requests import (orm_get_banner, orm_get_categories,
+                               orm_get_sub_categories, orm_get_items)
+
+from user_private.keyboards import (get_user_main_btns, get_user_catalog_btns,
+                                    get_user_sub_catalog_btns, get_items_btns)
 from common.paginator import Paginator
 
 
@@ -37,8 +40,18 @@ async def f_catalog(session, level, menu_name):
     return image, kbds
 
 
-async def f_items(session, level, category, page):
-    items = await orm_get_items(session, category_id=category)
+async def f_sub_catalog(session, level, category, menu_name):
+    banner = await orm_get_banner(session, menu_name)
+    image = InputMediaPhoto(media=banner.image, caption=banner.description)
+
+    sub_categories = await orm_get_sub_categories(session, category_id=category)
+    kbds = get_user_sub_catalog_btns(level=level, sub_categories=sub_categories)
+
+    return image, kbds
+
+
+async def f_items(session, level, sub_category, page):
+    items = await orm_get_items(session, sub_category_id=sub_category)
     paginator = Paginator(items, page=page)
     item = paginator.get_page()[0]
 
@@ -52,7 +65,7 @@ async def f_items(session, level, category, page):
 
     kbds = get_items_btns(
         level=level,
-        category=category,
+        sub_category=sub_category,
         page=page,
         pagination_btns=pagination_btns,
     )
@@ -65,6 +78,7 @@ async def get_menu_content(
     level: int,
     menu_name: str,
     category: int | None = None,
+    sub_category: int | None = None,
     page: int | None = None,
 ):
     if level == 0:
@@ -72,4 +86,6 @@ async def get_menu_content(
     elif level == 1:
         return await f_catalog(session, level, menu_name)
     elif level == 2:
-        return await f_items(session, level, category, page)
+        return await f_sub_catalog(session, level, category, page)
+    elif level == 3:
+        return await f_items(session, level, sub_category, page)

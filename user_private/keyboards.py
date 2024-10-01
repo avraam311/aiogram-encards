@@ -63,8 +63,7 @@ def get_user_sub_catalog_btns(*, level: int, sub_categories: list, sizes: tuple[
 def get_items_btns(
         *,
         level: int,
-        category: int,
-        sub_categories: int,
+        sub_category: int,
         page: int,
         pagination_btns: dict,
         sizes: tuple[int] = (2, 1)
@@ -72,7 +71,7 @@ def get_items_btns(
     keyboard = InlineKeyboardBuilder()
 
     keyboard.add(InlineKeyboardButton(text='Назад',
-                                      callback_data=MenuCB(level=level - 1, menu_name='category').pack()))
+                                      callback_data=MenuCB(level=level - 1, menu_name='sub_category').pack()))
 
     keyboard.adjust(*sizes)
 
@@ -83,7 +82,7 @@ def get_items_btns(
                                             callback_data=MenuCB(
                                                 level=level,
                                                 menu_name=menu_name,
-                                                category=category,
+                                                sub_category=sub_category,
                                                 page=page + 1).pack()))
 
         elif menu_name == "previous":
@@ -91,7 +90,7 @@ def get_items_btns(
                                             callback_data=MenuCB(
                                                 level=level,
                                                 menu_name=menu_name,
-                                                category=category,
+                                                category=sub_category,
                                                 page=page - 1).pack()))
 
     return keyboard.row(*row).as_markup()
