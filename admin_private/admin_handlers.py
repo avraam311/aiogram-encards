@@ -10,7 +10,7 @@ from admin_private import admin_keyboards as kb
 from common.filters import IsAdmin
 from database.requests import (orm_add_item, orm_get_item, orm_get_items, orm_delete_item,
                                orm_update_item, orm_get_info_pages, orm_change_banner_image,
-                               orm_get_categories)
+                               orm_get_sub_categories)
 from common.get_keyboard_func import get_inline_keyboard
 
 admin_router = Router()
@@ -24,9 +24,9 @@ async def admin_features(message: Message):
 
 @admin_router.message(F.text == 'Просмотреть')
 async def admin_features(message: Message, session: AsyncSession):
-    categories = await orm_get_categories(session)
-    btns = {category.name: f'category_{category.id}' for category in categories}
-    await message.answer("Выберите категорию", reply_markup=get_inline_keyboard(btns=btns))
+    sub_categories = await orm_get_sub_categories(session)
+    btns = {sub_category.name: f'sub_category_{sub_category.id}' for sub_category in sub_categories}
+    await message.answer("Выберите подподкатегорию", reply_markup=get_inline_keyboard(btns=btns))
 
 
 @admin_router.message(F.text == "Ничего")
@@ -37,10 +37,10 @@ async def nth(message: Message) -> None:
     )
 
 
-@admin_router.callback_query(F.data.startswith('category_'))
+@admin_router.callback_query(F.data.startswith('sub_category_'))
 async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
-    category_id = callback.data.split('_')[-1]
-    for item in await orm_get_items(session, int(category_id)):
+    sub_category_id = callback.data.split('_')[-1]
+    for item in await orm_get_items(session, int(sub_category_id)):
         await callback.message.answer_document(
             item.item_media,
             caption=f"<strong>{item.media_text}</strong>\n",
@@ -87,7 +87,7 @@ async def add_banner(message: Message, state: FSMContext):
 
 
 # Добавляем/изменяем изображение в таблице (там уже есть записанные страницы по именам:
-# main, words, listening, speaking, reading, writing, spec_pack
+# main, read!, catalog, sub_catalog, spec_pack
 @admin_router.message(AddItemBanner.image, F.photo)
 async def add_banner(message: Message, state: FSMContext, session: AsyncSession):
     image_id = message.photo[-1].file_id
@@ -98,7 +98,7 @@ async def add_banner(message: Message, state: FSMContext, session: AsyncSession)
                          \n{', '.join(pages_names)}")
         return
     await orm_change_banner_image(session, for_page, image_id,)
-    await message.answer("Баннер добавлен/изменен.")
+    await message.answer("Баннер добавлен/изменен.", reply_markup=kb.admin_main)
     await state.clear()
 
 
@@ -114,12 +114,12 @@ async def add_banner2(message: Message):
 
 class AddItem(StatesGroup):
     item_media = State()
-    category = State()
+    sub_category = State()
     media_text = State()
 
     item_for_change = None
 
-    category_filter = None
+    sub_category_filter = None
 
     # это свойство мне в данной реализации не нужно, но я его добавил для изучения синтаксиса
     # а так у меня к каждому состоянию привязана всегда одна и та же клавиатура
@@ -159,11 +159,11 @@ async def add_item(message: Message, state: FSMContext, session: AsyncSession):
         'Выберите...',
         reply_markup=kb.admin_back_cancel,
     )
-    categories = await orm_get_categories(session)
-    btns = {category.name: str(category.id) for category in categories}
-    await message.answer("...категорию",
+    sub_categories = await orm_get_sub_categories(session)
+    btns = {sub_category.name: str(sub_category.id) for sub_category in sub_categories}
+    await message.answer("...подкатегорию",
                          reply_markup=get_inline_keyboard(btns=btns))
-    await state.set_state(AddItem.category)
+    await state.set_state(AddItem.sub_category)
 
 
 # Хендлер отмены и сброса состояния должен быть всегда именно здесь,
@@ -205,43 +205,43 @@ async def back_step(message: Message, state: FSMContext) -> None:
         previous = step
 
 
-@admin_router.callback_query(AddItem.category)
-async def category_choice(callback: CallbackQuery, state: FSMContext,
+@admin_router.callback_query(AddItem.sub_category)
+async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
                           session: AsyncSession):
-    chosen_category = int(callback.data)
-    if chosen_category in [2, 7]:
-        AddItem.category_filter = F.video
+    chosen_sub_category = int(callback.data)
+    if chosen_sub_category in [2, 7]:
+        AddItem.sub_category_filter = F.video
     else:
-        AddItem.category_filter = F.photo
+        AddItem.sub_category_filter = F.photo
 
-    if int(callback.data) in [listening_category.id for listening_category in
-                              await orm_get_categories(session)]:
+    if int(callback.data) in [sub_category.id for sub_category in
+                              await orm_get_sub_categories(session)]:
         await callback.answer()
-        await state.update_data(category_id=callback.data)
+        await state.update_data(sub_category_id=callback.data)
         await callback.message.answer('Отправьте медиа', reply_markup=kb.admin_back_cancel)
     else:
-        await callback.message.answer('Выберите категорию из кнопок')
+        await callback.message.answer('Выберите подкатегорию из кнопок')
         await callback.answer()
     await state.set_state(AddItem.item_media)
 
 
-@admin_router.message(AddItem.category)
+@admin_router.message(AddItem.sub_category)
 async def error(message: Message):
     await message.answer('Следуйте инструкциям!')
 
 
-category_filter = AddItem.category_filter
+sub_category_filter = AddItem.sub_category_filter
 
 
 @admin_router.message(AddItem.item_media, or_f(F.video, F.text == "."))
 async def add_item_media(message: Message, state: FSMContext) -> None:
-    # if AddItem.category_filter == 'photo':
+    # if AddItem.sub_category_filter == 'photo':
     #     if message.text and message.text == ".":
     #         await state.update_data(item_media=AddItem.item_for_change.item_media)
     #     elif message.photo:
     #         await state.update_data(item_media=message.photo[-1].file_id)
     #
-    # elif AddItem.category_filter == 'video':
+    # elif AddItem.sub_category_filter == 'video':
     if message.text and message.text == ".":
         await state.update_data(item_media=AddItem.item_for_change.item_media)
     else:
@@ -251,7 +251,7 @@ async def add_item_media(message: Message, state: FSMContext) -> None:
         'Отправьте текст к медиа',
         reply_markup=kb.admin_back_cancel,
     )
-    AddItem.category_filter = None
+    AddItem.sub_category_filter = None
     await state.set_state(AddItem.media_text)
 
 

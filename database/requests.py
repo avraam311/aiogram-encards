@@ -7,7 +7,7 @@ from database.models import Item, Banner, Category, SubCategory
 ################### BANNER REQUESTS ####################
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     # Добавляем новый или изменяем существующий по именам
-    # пунктов меню: main, words, listening, speaking, reading, writing, spec_pack
+    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -53,17 +53,18 @@ async def orm_get_categories(session: AsyncSession):
 
 
 ################### SUB_CATEGORY REQUESTS ####################
-async def orm_create_sub_categories(session: AsyncSession, sub_categories: list):
+async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict):
     query = select(SubCategory)
     result = await session.execute(query)
     if result.first():
         return
-    session.add_all([SubCategory(name=name) for name in sub_categories])
+    session.add_all([SubCategory(name=name, category_id=category_id)
+                     for name, category_id in sub_categories.items()])
     await session.commit()
 
 
-async def orm_get_sub_categories(session: AsyncSession, category_id):
-    query = select(SubCategory).where(SubCategory.category_id == int(category_id))
+async def orm_get_sub_categories(session: AsyncSession, category_id: tuple = (2, 3, 4, 5)):
+    query = select(SubCategory).where(SubCategory.category_id in category_id)
     result = await session.execute(query)
     return result.scalars().all()
 ########################################################
