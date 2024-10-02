@@ -53,7 +53,7 @@ def get_user_sub_catalog_btns(*, level: int, sub_categories: list, sizes: tuple[
                                                                sub_category=i.id).pack()))
 
     keyboard.add(InlineKeyboardButton(text='Назад',
-                                      callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
+                                      callback_data=MenuCB(level=level - 1, menu_name='catalog').pack()))
     keyboard.add(InlineKeyboardButton(text='На главную',
                                       callback_data=MenuCB(level=0, menu_name='main').pack()))
 
@@ -66,14 +66,9 @@ def get_items_btns(
         sub_category: int,
         page: int,
         pagination_btns: dict,
-        sizes: tuple[int] = (2, 1)
+        sizes: tuple[int] = (2,)
 ):
     keyboard = InlineKeyboardBuilder()
-
-    keyboard.add(InlineKeyboardButton(text='Назад',
-                                      callback_data=MenuCB(level=level - 1, menu_name='sub_category').pack()))
-
-    keyboard.adjust(*sizes)
 
     row = []
     for text, menu_name in pagination_btns.items():
@@ -90,7 +85,16 @@ def get_items_btns(
                                             callback_data=MenuCB(
                                                 level=level,
                                                 menu_name=menu_name,
-                                                category=sub_category,
+                                                sub_category=sub_category,
                                                 page=page - 1).pack()))
+
+    keyboard.adjust(*sizes)
+
+    keyboard.add(InlineKeyboardButton(text='Назад',
+                                      callback_data=MenuCB(level=level - 1,
+                                                           menu_name='sub_catalog',).pack()))
+    keyboard.add(InlineKeyboardButton(text='На главную',
+                                      callback_data=MenuCB(level=0,
+                                                           menu_name='main').pack()))
 
     return keyboard.row(*row).as_markup()

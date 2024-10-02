@@ -57,7 +57,7 @@ async def f_items(session, level, sub_category, page):
 
     media = InputMediaDocument(
         media=item.item_media,
-        caption=f"<strong>{item.media_text}</strong>\n"
+        caption=f"<strong>{item.media_text}</strong>\n\n"
                 f"<strong>{paginator.page} из {paginator.pages}</strong>",
     )
 
