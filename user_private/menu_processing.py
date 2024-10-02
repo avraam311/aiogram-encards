@@ -45,30 +45,47 @@ async def f_sub_catalog(session, level, category, menu_name):
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
     sub_categories = await orm_get_sub_categories_user(session, category_id=category)
-    kbds = get_user_sub_catalog_btns(level=level, sub_categories=sub_categories)
+    kbds = get_user_sub_catalog_btns(level=level, category=category, sub_categories=sub_categories)
 
     return image, kbds
 
 
-async def f_items(session, level, sub_category, page):
+async def f_items(session, level, category, sub_category, page):
     items = await orm_get_items(session, sub_category_id=sub_category)
-    paginator = Paginator(items, page=page)
-    item = paginator.get_page()[0]
 
-    media = InputMediaDocument(
-        media=item.item_media,
-        caption=f"<strong>{item.media_text}</strong>\n\n"
-                f"<strong>{paginator.page} из {paginator.pages}</strong>",
-    )
+    if not items:
+        banner = await orm_get_banner(session, "media")
+        media = InputMediaPhoto(
+            media=banner.image, caption=banner.description
+        )
 
-    pagination_btns = pages(paginator)
+        kbds = get_items_btns(
+            level=level,
+            category=category,
+            sub_category=sub_category,
+            page=None,
+            pagination_btns=None,
+        )
 
-    kbds = get_items_btns(
-        level=level,
-        sub_category=sub_category,
-        page=page,
-        pagination_btns=pagination_btns,
-    )
+    else:
+        paginator = Paginator(items, page=page)
+        item = paginator.get_page()[0]
+
+        media = InputMediaDocument(
+            media=item.item_media,
+            caption=f"<strong>{item.media_text}</strong>\n\n"
+                    f"<strong>{paginator.page} из {paginator.pages}</strong>",
+        )
+
+        pagination_btns = pages(paginator)
+
+        kbds = get_items_btns(
+            level=level,
+            category=category,
+            sub_category=sub_category,
+            page=page,
+            pagination_btns=pagination_btns,
+        )
 
     return media, kbds
 
@@ -88,4 +105,4 @@ async def get_menu_content(
     elif level == 2:
         return await f_sub_catalog(session, level, category, "sub_catalog")
     elif level == 3:
-        return await f_items(session, level, sub_category, page)
+        return await f_items(session, level, category, sub_category, page)

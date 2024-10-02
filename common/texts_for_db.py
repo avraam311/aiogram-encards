@@ -29,4 +29,5 @@ description_for_info_pages = {
     ).as_html(),
     "catalog": "Категории:\n",
     "sub_catalog": "Подкатегории:\n",
+    "media": "Список медиа пуст\n"
 }

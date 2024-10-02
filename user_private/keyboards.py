@@ -35,26 +35,29 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
 
     for i in categories:
         keyboard.add(InlineKeyboardButton(text=i.name,
-                                          callback_data=MenuCB(level=level + 1, menu_name=i.name,
+                                          callback_data=MenuCB(level=level + 1,
+                                                               menu_name=i.name,
                                                                category=i.id).pack()))
 
-    keyboard.add(InlineKeyboardButton(text='Назад',
+    keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
 
     return keyboard.adjust(*sizes).as_markup()
 
 
-def get_user_sub_catalog_btns(*, level: int, sub_categories: list, sizes: tuple[int] = (2,)):
+def get_user_sub_catalog_btns(*, level: int, category: int, sub_categories: list, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
 
     for i in sub_categories:
         keyboard.add(InlineKeyboardButton(text=i.name,
-                                          callback_data=MenuCB(level=level + 1, menu_name=i.name,
+                                          callback_data=MenuCB(level=level + 1,
+                                                               menu_name=i.name,
+                                                               category=category,
                                                                sub_category=i.id).pack()))
 
-    keyboard.add(InlineKeyboardButton(text='Назад',
+    keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 1, menu_name='catalog').pack()))
-    keyboard.add(InlineKeyboardButton(text='На главную',
+    keyboard.add(InlineKeyboardButton(text="На главную",
                                       callback_data=MenuCB(level=0, menu_name='main').pack()))
 
     return keyboard.adjust(*sizes).as_markup()
@@ -63,38 +66,43 @@ def get_user_sub_catalog_btns(*, level: int, sub_categories: list, sizes: tuple[
 def get_items_btns(
         *,
         level: int,
-        sub_category: int,
-        page: int,
-        pagination_btns: dict,
+        category: int | None,
+        sub_category: int | None,
+        page: int | None,
+        pagination_btns: dict | None,
         sizes: tuple[int] = (2,)
 ):
     keyboard = InlineKeyboardBuilder()
+    if page:
+        row = []
+        for text, menu_name in pagination_btns.items():
+            if menu_name == "next":
+                row.append(InlineKeyboardButton(text=text,
+                                                callback_data=MenuCB(
+                                                    level=level,
+                                                    menu_name=menu_name,
+                                                    category=category,
+                                                    sub_category=sub_category,
+                                                    page=page + 1).pack()))
 
-    row = []
-    for text, menu_name in pagination_btns.items():
-        if menu_name == "next":
-            row.append(InlineKeyboardButton(text=text,
-                                            callback_data=MenuCB(
-                                                level=level,
-                                                menu_name=menu_name,
-                                                sub_category=sub_category,
-                                                page=page + 1).pack()))
+            elif menu_name == "previous":
+                row.append(InlineKeyboardButton(text=text,
+                                                callback_data=MenuCB(
+                                                    level=level,
+                                                    menu_name=menu_name,
+                                                    category=category,
+                                                    sub_category=sub_category,
+                                                    page=page - 1).pack()))
 
-        elif menu_name == "previous":
-            row.append(InlineKeyboardButton(text=text,
-                                            callback_data=MenuCB(
-                                                level=level,
-                                                menu_name=menu_name,
-                                                sub_category=sub_category,
-                                                page=page - 1).pack()))
+        keyboard.adjust(*sizes)
+        keyboard.row(*row)
 
-    keyboard.adjust(*sizes)
-
-    keyboard.add(InlineKeyboardButton(text='Назад',
+    keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 1,
-                                                           menu_name='sub_catalog',).pack()))
-    keyboard.add(InlineKeyboardButton(text='На главную',
+                                                           menu_name='sub_catalog',
+                                                           category=category).pack()))
+    keyboard.add(InlineKeyboardButton(text="На главную",
                                       callback_data=MenuCB(level=0,
                                                            menu_name='main').pack()))
 
-    return keyboard.row(*row).as_markup()
+    return keyboard.as_markup()

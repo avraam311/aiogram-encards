@@ -7,7 +7,7 @@ from database.models import Item, Banner, Category, SubCategory
 ################### BANNER REQUESTS ####################
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     # Добавляем новый или изменяем существующий по именам
-    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack
+    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
