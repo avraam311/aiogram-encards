@@ -41,7 +41,7 @@ async def nth(message: Message) -> None:
 async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
     sub_category_id = callback.data.split('_')[-1]
     for item in await orm_get_items(session, int(sub_category_id)):
-        await callback.message.answer_document(
+        await callback.message.answer_photo(
             item.item_media,
             caption=f"<strong>{item.media_text}</strong>\n",
             reply_markup=get_inline_keyboard(
@@ -119,8 +119,6 @@ class AddItem(StatesGroup):
 
     item_for_change = None
 
-    sub_category_filter = None
-
     # это свойство мне в данной реализации не нужно, но я его добавил для изучения синтаксиса
     # а так у меня к каждому состоянию привязана всегда одна и та же клавиатура
     keyboards = {
@@ -130,7 +128,7 @@ class AddItem(StatesGroup):
 
     texts = {
         'AddItem:item_media': "Отправьте медиа снова",
-        'AddItem:media_text': "Напишите текст фильма снова",
+        'AddItem:media_text': "Отправьте текст к медиа снова",
     }
 
 
@@ -144,7 +142,7 @@ async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session
     AddItem.item_for_change = item_for_change
 
     await callback.message.answer(
-        'Отправьте фото фильма',
+        'Отправьте медиа',
         reply_markup=ReplyKeyboardRemove(),
     )
     await state.set_state(AddItem.item_media)
@@ -206,12 +204,7 @@ async def back_step(message: Message, state: FSMContext) -> None:
 
 @admin_router.callback_query(AddItem.sub_category)
 async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
-                          session: AsyncSession):
-    chosen_sub_category = int(callback.data)
-    if chosen_sub_category in [2, 7]:
-        AddItem.sub_category_filter = F.video
-    else:
-        AddItem.sub_category_filter = F.photo
+                              session: AsyncSession):
 
     if int(callback.data) in [sub_category.id for sub_category in
                               await orm_get_sub_categories_admin(session)]:
@@ -229,28 +222,17 @@ async def error(message: Message):
     await message.answer('Следуйте инструкциям!')
 
 
-sub_category_filter = AddItem.sub_category_filter
-
-
-@admin_router.message(AddItem.item_media, or_f(F.video, F.text == "."))
+@admin_router.message(AddItem.item_media, or_f(F.text, F.photo))
 async def add_item_media(message: Message, state: FSMContext) -> None:
-    # if AddItem.sub_category_filter == 'photo':
-    #     if message.text and message.text == ".":
-    #         await state.update_data(item_media=AddItem.item_for_change.item_media)
-    #     elif message.photo:
-    #         await state.update_data(item_media=message.photo[-1].file_id)
-    #
-    # elif AddItem.sub_category_filter == 'video':
     if message.text and message.text == ".":
         await state.update_data(item_media=AddItem.item_for_change.item_media)
-    else:
-        await state.update_data(item_media=message.video.file_id)
+    elif message.photo:
+        await state.update_data(item_media=message.photo[-1].file_id)
 
     await message.answer(
         'Отправьте текст к медиа',
         reply_markup=kb.admin_back_cancel,
     )
-    AddItem.sub_category_filter = None
     await state.set_state(AddItem.media_text)
 
 
@@ -261,7 +243,7 @@ async def error(message: Message) -> None:
     )
 
 
-@admin_router.message(AddItem.media_text, or_f(F.text, F.text == "."))
+@admin_router.message(AddItem.media_text, F.text)
 async def add_media_text(message: Message, state: FSMContext, session: AsyncSession) -> None:
     if message.text == ".":
         await state.update_data(media_text=AddItem.item_for_change.media_text)
