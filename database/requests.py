@@ -82,7 +82,7 @@ async def orm_add_item(session: AsyncSession, data: dict):
     obj = Item(
         item_media=data["item_media"],
         media_text=data["media_text"],
-        category_id=int(data["category_id"]),
+        sub_category_id=int(data["sub_category_id"]),
     )
     session.add(obj)
     await session.commit()

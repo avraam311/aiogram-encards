@@ -73,6 +73,17 @@ def get_items_btns(
         sizes: tuple[int] = (2,)
 ):
     keyboard = InlineKeyboardBuilder()
+
+    keyboard.adjust(*sizes)
+
+    keyboard.add(InlineKeyboardButton(text="Назад",
+                                      callback_data=MenuCB(level=level - 1,
+                                                           menu_name='sub_catalog',
+                                                           category=category).pack()))
+    keyboard.add(InlineKeyboardButton(text="На главную",
+                                      callback_data=MenuCB(level=0,
+                                                           menu_name='main').pack()))
+
     if page:
         row = []
         for text, menu_name in pagination_btns.items():
@@ -94,15 +105,6 @@ def get_items_btns(
                                                     sub_category=sub_category,
                                                     page=page - 1).pack()))
 
-        keyboard.adjust(*sizes)
         keyboard.row(*row)
-
-    keyboard.add(InlineKeyboardButton(text="Назад",
-                                      callback_data=MenuCB(level=level - 1,
-                                                           menu_name='sub_catalog',
-                                                           category=category).pack()))
-    keyboard.add(InlineKeyboardButton(text="На главную",
-                                      callback_data=MenuCB(level=0,
-                                                           menu_name='main').pack()))
 
     return keyboard.as_markup()
