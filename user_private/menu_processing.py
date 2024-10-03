@@ -102,6 +102,7 @@ async def get_menu_content(
     category: int | None = None,
     sub_category: int | None = None,
     page: int | None = None,
+    user_id: int | None = None,
 ):
     if level == 0:
         return await main_menu(session, level, menu_name)

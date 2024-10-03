@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 
+from database.requests import orm_add_user
+
 
 user_router = Router()
 
@@ -23,6 +25,15 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     await message.answer(message.text, reply_markup=ReplyKeyboardRemove())
     await message.answer_photo(media.media, caption=media.caption, reply_markup=reply_markup)
 
+    user = message.from_user
+    await orm_add_user(
+        session,
+        user_id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone=None,
+    )
+
 
 @user_router.callback_query(MenuCB.filter())
 async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: AsyncSession):
@@ -34,6 +45,7 @@ async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: Asy
         category=callback_data.category,
         sub_category=callback_data.sub_category,
         page=callback_data.page,
+        user_id=callback.from_user.id,
     )
 
     await callback.message.edit_media(media=media, reply_markup=reply_markup)

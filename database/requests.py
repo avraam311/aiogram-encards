@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
-from database.models import Item, Banner, Category, SubCategory
+from database.models import Item, Banner, Category, SubCategory, User
 
 
 ################### BANNER REQUESTS ####################
@@ -73,7 +73,6 @@ async def orm_get_sub_categories_admin(session: AsyncSession):
     query = select(SubCategory)
     result = await session.execute(query)
     return result.scalars().all()
-
 ########################################################
 
 
@@ -113,4 +112,22 @@ async def orm_delete_item(session: AsyncSession, item_id: int):
     query = delete(Item).where(Item.id == item_id)
     await session.execute(query)
     await session.commit()
+########################################################
+
+
+################### USER REQUESTS ####################
+async def orm_add_user(
+    session: AsyncSession,
+    user_id: int,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    phone: str | None = None,
+):
+    query = select(User).where(User.user_id == user_id)
+    result = await session.execute(query)
+    if result.first() is None:
+        session.add(
+            User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone)
+        )
+        await session.commit()
 ########################################################
