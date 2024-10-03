@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aiogram.types import InputMediaPhoto
+from aiogram.types import InputMediaPhoto, InputMediaVideo
 
 from database.requests import (orm_get_banner, orm_get_categories,
                                orm_get_sub_categories_user, orm_get_items)
@@ -68,10 +68,15 @@ async def f_items(session, level, category, sub_category, page):
         )
 
     else:
+        if int(sub_category) in [2, 7]:
+            input_media_photo_or_video = InputMediaVideo
+        else:
+            input_media_photo_or_video = InputMediaPhoto
+
         paginator = Paginator(items, page=page)
         item = paginator.get_page()[0]
 
-        media = InputMediaPhoto(
+        media = input_media_photo_or_video(
             media=item.item_media,
             caption=f"<strong>{item.media_text}</strong>\n\n"
                     f"<strong>{paginator.page} из {paginator.pages}</strong>",
