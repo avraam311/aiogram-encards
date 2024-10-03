@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, DateTime, func
+from sqlalchemy import String, Text, ForeignKey, DateTime, func, BigInteger
 
 
 ################ ANNOTATION MODELS ################
@@ -52,4 +52,28 @@ class Item(Base):
         'sub_category.id', ondelete='CASCADE'), nullable=False)
 
     sub_category: Mapped['SubCategory'] = relationship(backref='item')
+###############################################
+
+
+################ USER MODELS ################
+class User(Base):
+    __tablename__ = 'user'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+    first_name: Mapped[str] = mapped_column(String(150), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(150), nullable=True)
+    phone: Mapped[str] = mapped_column(String(13), nullable=True)
+###############################################
+
+
+class WordsCategory(Base):
+    __tablename__ = 'words_category'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+    # user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
+
+    # user: Mapped['User'] = relationship(backref='words_category')
 ###############################################
