@@ -9,8 +9,6 @@ from database.requests import orm_create_words_categories
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 
-from database.requests import orm_add_user
-
 
 user_router = Router()
 
@@ -32,15 +30,6 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     }
     async with session_maker() as session:
         await orm_create_words_categories(session, users_info)
-
-    user = message.from_user
-    await orm_add_user(
-        session,
-        user_id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=None,
-    )
 
 
 @user_router.callback_query(MenuCB.filter())
