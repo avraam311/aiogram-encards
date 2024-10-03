@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
-from database.models import Item, Banner, Category, SubCategory, User
+from database.models import Item, Banner, Category, SubCategory, WordsCategory
 
 
 ################### BANNER REQUESTS ####################
@@ -73,6 +73,7 @@ async def orm_get_sub_categories_admin(session: AsyncSession):
     query = select(SubCategory)
     result = await session.execute(query)
     return result.scalars().all()
+
 ########################################################
 
 
@@ -115,19 +116,22 @@ async def orm_delete_item(session: AsyncSession, item_id: int):
 ########################################################
 
 
-################### USER REQUESTS ####################
-async def orm_add_user(
-    session: AsyncSession,
-    user_id: int,
-    first_name: str | None = None,
-    last_name: str | None = None,
-    phone: str | None = None,
-):
-    query = select(User).where(User.user_id == user_id)
+################### WORDS_CATEGORY REQUESTS ####################
+async def orm_create_words_categories(session: AsyncSession, users_info: dict):
+    query = select(WordsCategory)
     result = await session.execute(query)
-    if result.first() is None:
-        session.add(
-            User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone)
-        )
-        await session.commit()
+    if result.first():
+        return
+    user_info = WordsCategory(
+        name='Первый',
+        user_id=users_info["user_id"],
+    )
+    session.add(user_info)
+    await session.commit()
+
+
+async def orm_get_words_categories(session: AsyncSession, user_id: int):
+    query = select(Category).where(WordsCategory.id == user_id)
+    result = await session.execute(query)
+    return result.scalars().all()
 ########################################################

@@ -4,6 +4,8 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database.engine import session_maker
+from database.requests import orm_create_words_categories
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 
@@ -21,9 +23,15 @@ async def commamd_help(message: Message):
 
 @user_router.message(CommandStart())
 async def command_start(message: Message, session: AsyncSession) -> None:
-    media, reply_markup = await get_menu_content(session, level=0, menu_name="main")
+    media, reply_markup = await get_menu_content(session, level=0, menu_name="main", user_id=message.from_user.id)
     await message.answer(message.text, reply_markup=ReplyKeyboardRemove())
     await message.answer_photo(media.media, caption=media.caption, reply_markup=reply_markup)
+    user = message.from_user
+    users_info = {
+        'user_id':  user.id,
+    }
+    async with session_maker() as session:
+        await orm_create_words_categories(session, users_info)
 
     user = message.from_user
     await orm_add_user(
