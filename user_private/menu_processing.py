@@ -121,7 +121,7 @@ async def get_menu_content(
     elif level == 1:
         return await f_catalog(session, level, menu_name)
     elif level == 2:
-        return await f_sub_catalog(session, level, category, "sub_catalog")
+        return await f_sub_catalog(session, level, category, menu_name)
     elif level == 3:
         return await f_items(session, level, category, sub_category, page)
     elif level == 4:

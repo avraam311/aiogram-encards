@@ -10,7 +10,7 @@ class MenuCB(CallbackData, prefix="menu"):
     sub_category: int | None = None
     page: int = 1
     item_id: int | None = None
-    # words_category: int | None
+    words_category: int | None = None
 
 
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
@@ -34,10 +34,14 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
 def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
 
+    keyboard.add(InlineKeyboardButton(text="Слова",
+                                      callback_data=MenuCB(level=level + 3,
+                                                           menu_name='words_catalog',).pack()))
+
     for i in categories:
         keyboard.add(InlineKeyboardButton(text=i.name,
                                           callback_data=MenuCB(level=level + 1,
-                                                               menu_name=i.name,
+                                                               menu_name='sub_catalog',
                                                                category=i.id).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад",
@@ -121,8 +125,8 @@ def get_user_words_catalog_btns(*, level: int, words_categories: list, sizes: tu
                                                                words_category=i.id).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад",
-                                      callback_data=MenuCB(level=level - 1,
-                                                           menu_name='main').pack()))
+                                      callback_data=MenuCB(level=level - 3,
+                                                           menu_name='catalog').pack()))
     keyboard.add(InlineKeyboardButton(text="На главную",
                                       callback_data=MenuCB(level=0,
                                                            menu_name='main').pack()))

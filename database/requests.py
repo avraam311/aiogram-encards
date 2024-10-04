@@ -7,7 +7,7 @@ from database.models import Item, Banner, Category, SubCategory, WordsCategory
 ################### BANNER REQUESTS ####################
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     # Добавляем новый или изменяем существующий по именам
-    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media
+    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media, words_catalog, words_sub_catalog
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -131,7 +131,7 @@ async def orm_create_words_categories(session: AsyncSession, users_info: dict):
 
 
 async def orm_get_words_categories(session: AsyncSession, user_id: int):
-    query = select(Category).where(WordsCategory.id == user_id)
+    query = select(WordsCategory).where(WordsCategory.user_id == user_id)
     result = await session.execute(query)
     return result.scalars().all()
 ########################################################
