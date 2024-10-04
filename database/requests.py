@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
-from database.models import Item, Banner, Category, SubCategory, WordsCategory
+from database.models import Item, Banner, Category, SubCategory, User, WordsCategory
 
 
 ################### BANNER REQUESTS ####################
@@ -116,22 +116,46 @@ async def orm_delete_item(session: AsyncSession, item_id: int):
 ########################################################
 
 
-################### WORDS_CATEGORY REQUESTS ####################
-async def orm_create_words_categories(session: AsyncSession, users_info: dict):
-    query = select(WordsCategory)
+################### USER REQUESTS ####################
+async def orm_add_user(
+    session: AsyncSession,
+    user_id: int,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    phone: str | None = None,
+):
+    query = select(User).where(User.user_id == user_id)
     result = await session.execute(query)
-    if result.first():
-        return
-    user_info = WordsCategory(
-        name='Первый',
-        user_id=users_info["user_id"],
+    if result.first() is None:
+        session.add(
+            User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone)
+        )
+        await session.commit()
+########################################################
+
+
+################### WORDS_CATEGORY REQUESTS ####################
+async def orm_add_to_words_category(session: AsyncSession, user_id: int):
+    query = select(WordsCategory).where(WordsCategory.user_id == user_id)
+    words_categories = await session.execute(query)
+    words_categories = words_categories.scalars().all()
+    max_name = len(words_categories)
+    obj = WordsCategory(
+        user_id=user_id,
+        name=max_name+1,
     )
-    session.add(user_info)
+    session.add(obj)
     await session.commit()
 
 
-async def orm_get_words_categories(session: AsyncSession, user_id: int):
+async def orm_get_user_words_categories(session: AsyncSession, user_id: int):
     query = select(WordsCategory).where(WordsCategory.user_id == user_id)
-    result = await session.execute(query)
-    return result.scalars().all()
+    words_categories = await session.execute(query)
+    words_categories = words_categories.scalars().all()
+    max_name = len(words_categories)
+    if max_name == 0:
+        return 0
+    if max_name == 16:
+        return 16
+    return words_categories
 ########################################################

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, DateTime, func, BigInteger
+from sqlalchemy import String, Text, ForeignKey, DateTime, func, BigInteger, Integer
 
 
 ################ ANNOTATION MODELS ################
@@ -71,9 +71,8 @@ class WordsCategory(Base):
     __tablename__ = 'words_category'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
-    user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    # user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
+    name: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # user: Mapped['User'] = relationship(backref='words_category')
+    user: Mapped['User'] = relationship(backref='words_category')
 ###############################################

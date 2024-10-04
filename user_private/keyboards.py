@@ -10,6 +10,7 @@ class MenuCB(CallbackData, prefix="menu"):
     sub_category: int | None = None
     page: int = 1
     item_id: int | None = None
+    user_id: int | None = None
     words_category: int | None = None
 
 
@@ -119,11 +120,15 @@ def get_user_words_catalog_btns(*, level: int, words_categories: list, sizes: tu
     keyboard = InlineKeyboardBuilder()
 
     for i in words_categories:
-        keyboard.add(InlineKeyboardButton(text=i.name,
+        keyboard.add(InlineKeyboardButton(text=f"\"{str(i.name)}\"",
                                           callback_data=MenuCB(level=level + 1,
-                                                               menu_name=i.name,
+                                                               menu_name=f"\"{str(i.name)}\"",
+                                                               user_id=i.user_id,
                                                                words_category=i.id).pack()))
 
+    keyboard.add(InlineKeyboardButton(text="Добавить каталог",
+                                      callback_data=MenuCB(level=level,
+                                                           menu_name='add_to_words_category').pack()))
     keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 3,
                                                            menu_name='catalog').pack()))
