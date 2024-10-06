@@ -119,12 +119,13 @@ def get_items_btns(
 def get_user_words_catalog_btns(*, level: int, words_categories: list, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
 
-    for i in words_categories:
-        keyboard.add(InlineKeyboardButton(text=f"\"{str(i.name)}\"",
-                                          callback_data=MenuCB(level=level + 1,
-                                                               menu_name=f"\"{str(i.name)}\"",
-                                                               user_id=i.user_id,
-                                                               words_category=i.id).pack()))
+    if words_categories:
+        for i in words_categories:
+            keyboard.add(InlineKeyboardButton(text=f"\"{str(i.name)}\"",
+                                              callback_data=MenuCB(level=level + 1,
+                                                                   menu_name="words_sub_catalog",
+                                                                   user_id=i.user_id,
+                                                                   words_category=i.name).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Добавить каталог",
                                       callback_data=MenuCB(level=level,
@@ -132,6 +133,39 @@ def get_user_words_catalog_btns(*, level: int, words_categories: list, sizes: tu
     keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 3,
                                                            menu_name='catalog').pack()))
+    keyboard.add(InlineKeyboardButton(text="На главную",
+                                      callback_data=MenuCB(level=0,
+                                                           menu_name='main').pack()))
+
+    return keyboard.adjust(*sizes).as_markup()
+
+
+def get_user_words_sub_catalog_btns(*, level: int,
+                                    words_category: int,
+                                    words_sub_categories: list,
+                                    sizes: tuple[int] = (2,)):
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.add(InlineKeyboardButton(text="Удалить этот каталог",
+                                      callback_data=MenuCB(level=level-1,
+                                                           menu_name='delete_from_words_category',
+                                                           words_category=words_category).pack()))
+
+    for i in words_sub_categories:
+        keyboard.add(InlineKeyboardButton(text=f"\"{str(i.name)}\"",
+                                          callback_data=MenuCB(level=level + 1,
+                                                               menu_name="words_sub_catalog",
+                                                               user_id=i.user_id,
+                                                               words_category=words_category).pack()))
+
+    keyboard.add(InlineKeyboardButton(text="Добавить пакет",
+                                      callback_data=MenuCB(level=level,
+                                                           menu_name='add_to_words_sub_category',
+                                                           words_category=words_category).pack()))
+
+    keyboard.add(InlineKeyboardButton(text="Назад",
+                                      callback_data=MenuCB(level=level - 1,
+                                                           menu_name='words_catalog').pack()))
     keyboard.add(InlineKeyboardButton(text="На главную",
                                       callback_data=MenuCB(level=0,
                                                            menu_name='main').pack()))

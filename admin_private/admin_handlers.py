@@ -92,7 +92,7 @@ async def add_banner(message: Message, state: FSMContext):
 
 
 # Добавляем/изменяем изображение в таблице (там уже есть записанные страницы по именам:
-# main, read!, catalog, sub_catalog, spec_pack, words_catalog, words_sub_catalog
+# main, read!, catalog, sub_catalog, spec_pack, words_catalog, words_sub_catalog, words
 @admin_router.message(AddItemBanner.image, F.photo)
 async def add_banner(message: Message, state: FSMContext, session: AsyncSession):
     image_id = message.photo[-1].file_id

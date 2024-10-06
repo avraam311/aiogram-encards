@@ -32,4 +32,5 @@ description_for_info_pages = {
     "media": "Список медиа пуст\n",
     "words_catalog": "Каталоги слов\n",
     "words_sub_catalog": "У вас 0 пакетов слов\n",
+    "words": "Вот ваши слова\n"
 }

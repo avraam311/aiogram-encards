@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
-from database.models import Item, Banner, Category, SubCategory, User, WordsCategory
+from database.models import Item, Banner, Category, SubCategory, User, WordsCategory, WordsSubCategory
 
 
 ################### BANNER REQUESTS ####################
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     # Добавляем новый или изменяем существующий по именам
-    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media, words_catalog, words_sub_catalog
+    # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media, words_catalog, words_sub_catalog, words
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -148,14 +148,49 @@ async def orm_add_to_words_category(session: AsyncSession, user_id: int):
     await session.commit()
 
 
-async def orm_get_user_words_categories(session: AsyncSession, user_id: int):
+async def orm_delete_from_words_category(session: AsyncSession, user_id: int, words_category: int):
+    query = delete(WordsCategory).where(WordsCategory.user_id == user_id,
+                                        WordsCategory.name == words_category)
+    await session.execute(query)
+    await session.commit()
+
+
+async def orm_get_words_categories(session: AsyncSession, user_id: int):
     query = select(WordsCategory).where(WordsCategory.user_id == user_id)
     words_categories = await session.execute(query)
     words_categories = words_categories.scalars().all()
     max_name = len(words_categories)
     if max_name == 0:
         return 0
-    if max_name == 16:
-        return 16
+    if max_name == 26:
+        return 26
     return words_categories
+########################################################
+
+
+################### WORDS_SUB_CATEGORY REQUESTS ####################
+async def orm_add_to_words_sub_category(session: AsyncSession, user_id: int, words_category_id: int):
+    query = select(WordsCategory).where(WordsCategory.user_id == user_id,
+                                        WordsSubCategory.words_category_id == words_category_id,)
+    words_categories = await session.execute(query)
+    words_categories = words_categories.scalars().all()
+    max_name = len(words_categories)
+    obj = WordsSubCategory(
+        user_id=user_id,
+        name=max_name+1,
+        words_category_id=words_category_id,
+    )
+    session.add(obj)
+    await session.commit()
+
+
+async def orm_get_words_sub_categories(session: AsyncSession, user_id: int, words_category: int):
+    query = select(WordsCategory).where(WordsCategory.user_id == user_id,
+                                        WordsSubCategory.words_category_id == words_category,)
+    words_sub_categories = await session.execute(query)
+    words_sub_categories = words_sub_categories.scalars().all()
+    max_name = len(words_sub_categories)
+    if max_name == 26:
+        return 26
+    return words_sub_categories
 ########################################################

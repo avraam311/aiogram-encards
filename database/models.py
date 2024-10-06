@@ -67,6 +67,7 @@ class User(Base):
 ###############################################
 
 
+################ WORDS_CATEGORY MODELS ################
 class WordsCategory(Base):
     __tablename__ = 'words_category'
 
@@ -75,4 +76,19 @@ class WordsCategory(Base):
     name: Mapped[int] = mapped_column(Integer, nullable=False)
 
     user: Mapped['User'] = relationship(backref='words_category')
+###############################################
+
+
+################ WORDS_SUB_CATEGORY MODELS ################
+class WordsSubCategory(Base):
+    __tablename__ = 'words_sub_category'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
+    name: Mapped[int] = mapped_column(Integer, nullable=False)
+    words_category_id: Mapped[int] = mapped_column(ForeignKey(
+        'words_category.id', ondelete='CASCADE'), nullable=False)
+
+    user: Mapped['User'] = relationship(backref='words_sub_category')
+    words_category: Mapped['WordsCategory'] = relationship(backref='words_sub_category')
 ###############################################
