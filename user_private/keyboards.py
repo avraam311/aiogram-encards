@@ -125,7 +125,7 @@ def get_user_words_catalog_btns(*, level: int, words_categories: list, sizes: tu
                                               callback_data=MenuCB(level=level + 1,
                                                                    menu_name="words_sub_catalog",
                                                                    user_id=i.user_id,
-                                                                   words_category=i.name).pack()))
+                                                                   words_category=i.user_id_name).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Добавить каталог",
                                       callback_data=MenuCB(level=level,

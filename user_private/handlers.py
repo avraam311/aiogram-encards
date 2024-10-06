@@ -54,8 +54,7 @@ async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: Asy
 
     elif callback_data.menu_name == "delete_from_words_category":
 
-        await orm_delete_from_words_category(session, user_id=callback.from_user.id,
-                                             words_category=callback_data.words_category)
+        await orm_delete_from_words_category(session, user_id_name=callback_data.words_category)
         await callback.answer(f'Каталог успешно удален')
 
     elif callback_data.menu_name == "add_to_words_sub_category":

@@ -74,6 +74,7 @@ class WordsCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
     name: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id_name: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
 
     user: Mapped['User'] = relationship(backref='words_category')
 ###############################################
@@ -87,7 +88,7 @@ class WordsSubCategory(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('user.user_id', ondelete='CASCADE'), nullable=False)
     name: Mapped[int] = mapped_column(Integer, nullable=False)
     words_category_id: Mapped[int] = mapped_column(ForeignKey(
-        'words_category.id', ondelete='CASCADE'), nullable=False)
+        'words_category.user_id_name', ondelete='CASCADE'), nullable=False)
 
     user: Mapped['User'] = relationship(backref='words_sub_category')
     words_category: Mapped['WordsCategory'] = relationship(backref='words_sub_category')

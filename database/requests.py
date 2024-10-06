@@ -143,14 +143,14 @@ async def orm_add_to_words_category(session: AsyncSession, user_id: int):
     obj = WordsCategory(
         user_id=user_id,
         name=max_name+1,
+        user_id_name=int(str(user_id)+str(max_name+1)),
     )
     session.add(obj)
     await session.commit()
 
 
-async def orm_delete_from_words_category(session: AsyncSession, user_id: int, words_category: int):
-    query = delete(WordsCategory).where(WordsCategory.user_id == user_id,
-                                        WordsCategory.name == words_category)
+async def orm_delete_from_words_category(session: AsyncSession, user_id_name: int):
+    query = delete(WordsCategory).where(WordsCategory.user_id_name == user_id_name)
     await session.execute(query)
     await session.commit()
 
@@ -170,11 +170,11 @@ async def orm_get_words_categories(session: AsyncSession, user_id: int):
 
 ################### WORDS_SUB_CATEGORY REQUESTS ####################
 async def orm_add_to_words_sub_category(session: AsyncSession, user_id: int, words_category_id: int):
-    query = select(WordsCategory).where(WordsCategory.user_id == user_id,
-                                        WordsSubCategory.words_category_id == words_category_id,)
-    words_categories = await session.execute(query)
-    words_categories = words_categories.scalars().all()
-    max_name = len(words_categories)
+    query = select(WordsSubCategory).where(WordsSubCategory.user_id == user_id,
+                                           WordsSubCategory.words_category_id == words_category_id,)
+    words_sub_categories = await session.execute(query)
+    words_sub_categories = words_sub_categories.scalars().all()
+    max_name = len(words_sub_categories)
     obj = WordsSubCategory(
         user_id=user_id,
         name=max_name+1,
@@ -185,8 +185,8 @@ async def orm_add_to_words_sub_category(session: AsyncSession, user_id: int, wor
 
 
 async def orm_get_words_sub_categories(session: AsyncSession, user_id: int, words_category: int):
-    query = select(WordsCategory).where(WordsCategory.user_id == user_id,
-                                        WordsSubCategory.words_category_id == words_category,)
+    query = select(WordsSubCategory).where(WordsSubCategory.user_id == user_id,
+                                           WordsSubCategory.words_category_id == words_category,)
     words_sub_categories = await session.execute(query)
     words_sub_categories = words_sub_categories.scalars().all()
     max_name = len(words_sub_categories)
