@@ -15,8 +15,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from user_private.handlers import user_router
-from user_private.payment import payment_router
 from admin_private.admin_handlers import admin_router
+from user_private.payment import payment_router
 from common.commands import private
 from database.engine import create_db, drop_all, session_maker
 from middlewares.db import DataBaseSession
