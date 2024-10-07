@@ -10,7 +10,7 @@ class MenuCB(CallbackData, prefix="menu"):
     sub_category: int | None = None
     page: int = 1
     item_id: int | None = None
-    user_id: int | None = None
+    spec_pack_check: str | None = None
 
 
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
@@ -35,6 +35,12 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
     keyboard = InlineKeyboardBuilder()
 
     for i in categories:
+        if i.name == 'Спец. пакет':
+            keyboard.add(InlineKeyboardButton(text=i.name,
+                                              callback_data=MenuCB(level=level + 1,
+                                                                   menu_name='sub_catalog',
+                                                                   category=i.id,
+                                                                   spec_pack_check='spec_pack_check',).pack()))
         keyboard.add(InlineKeyboardButton(text=i.name,
                                           callback_data=MenuCB(level=level + 1,
                                                                menu_name='sub_catalog',

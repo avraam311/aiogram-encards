@@ -132,4 +132,23 @@ async def orm_add_user(
             User(user_id=user_id, first_name=first_name, last_name=last_name, phone=phone, spec_pack=spec_pack)
         )
         await session.commit()
+        return True
+
+
+async def orm_change_spec_pack(
+    session: AsyncSession,
+    user_id: int,
+    spec_pack: int = 0,
+):
+    query = update(User).where(User.user_id == user_id).values(
+        spec_pack=spec_pack,
+    )
+    await session.execute(query)
+    await session.commit()
+
+
+async def orm_check_user_spec_pack(session: AsyncSession, user_id: int):
+    query = select(User).where(User.user_id == user_id)
+    result = await session.execute(query)
+    return result.scalar()
 ########################################################

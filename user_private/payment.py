@@ -2,6 +2,10 @@ from aiogram import Router, Bot, F
 from aiogram.filters import Command
 from aiogram.types import Message, LabeledPrice, PreCheckoutQuery
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.requests import orm_change_spec_pack, orm_check_user_spec_pack
+
 import os
 
 
@@ -12,7 +16,12 @@ PRICE = LabeledPrice(label='Подписка на 1 месяц', amount=99*100)
 
 
 @payment_router.message(Command('buy_spec_pack'))
-async def commamd_buy_spec_pack(message: Message, bot: Bot):
+async def commamd_buy_spec_pack(message: Message, bot: Bot, session: AsyncSession):
+    spec_pack_check = await orm_check_user_spec_pack(session, user_id=message.from_user.id)
+    if spec_pack_check.spec_pack == 1:
+        await message.answer(text='У вас уже есть спец. пакет, просто наслаждайтесь!')
+        return
+
     if os.getenv('PAYMENTS_TOKEN').split(':')[1] == 'TEST':
         await message.answer('ТЕСТОВЫЙ ПЛАТЕЖ!!!')
 
@@ -53,7 +62,8 @@ async def f_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: Bot):
 
 
 @payment_router.message(F.successful_payment)
-async def successful_payment(message: Message):
+async def successful_payment(message: Message, session: AsyncSession):
     payment_message = (f'Спасибо за оплату {message.successful_payment.total_amount // 100} '
                        f'{message.successful_payment.currency}.')
     await message.answer(payment_message)
+    await orm_change_spec_pack(session, user_id=message.from_user.id, spec_pack=1)

@@ -4,7 +4,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.requests import orm_add_user
+from database.requests import orm_add_user, orm_check_user_spec_pack
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 
@@ -25,17 +25,24 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     await message.answer_photo(media.media, caption=media.caption, reply_markup=reply_markup)
 
     user = message.from_user
-    await orm_add_user(
-        session,
-        user_id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
+    first_message = await orm_add_user(
+                        session,
+                        user_id=user.id,
+                        first_name=user.first_name,
+                        last_name=user.last_name,
     )
-    await message.answer(f"Пользователь {message.from_user.first_name} добавлен в базу данных")
+    if first_message:
+        await message.answer(f"Пользователь {message.from_user.first_name} добавлен в базу данных")
 
 
 @user_router.callback_query(MenuCB.filter())
 async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: AsyncSession):
+    if callback_data.spec_pack_check == 'spec_pack_check':
+        spec_pack_check = await orm_check_user_spec_pack(session, user_id=callback.from_user.id)
+        if spec_pack_check.spec_pack == 0:
+            await callback.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее!',
+                                  show_alert=True,)
+            return
 
     media, reply_markup = await get_menu_content(
         session,
@@ -44,7 +51,6 @@ async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: Asy
         category=callback_data.category,
         sub_category=callback_data.sub_category,
         page=callback_data.page,
-        user_id=callback.from_user.id,
     )
 
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
