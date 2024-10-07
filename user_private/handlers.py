@@ -30,7 +30,6 @@ async def command_start(message: Message, session: AsyncSession) -> None:
         user_id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
-        phone=None,
     )
     await message.answer(f"Пользователь {message.from_user.first_name} добавлен в базу данных")
 

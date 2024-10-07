@@ -15,6 +15,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from user_private.handlers import user_router
+from user_private.payment import payment_router
 from admin_private.admin_handlers import admin_router
 from common.commands import private
 from database.engine import create_db, drop_all, session_maker
@@ -25,7 +26,7 @@ bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=Pars
 
 dp = Dispatcher()
 
-dp.include_routers(user_router, admin_router)
+dp.include_routers(user_router, admin_router, payment_router)
 
 
 async def on_startup(bot):
