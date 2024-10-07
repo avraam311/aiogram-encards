@@ -3,12 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import InputMediaPhoto, InputMediaVideo
 
 from database.requests import (orm_get_banner, orm_get_categories,
-                               orm_get_sub_categories_user, orm_get_items,
-                               orm_get_words_categories, orm_get_words_sub_categories,)
+                               orm_get_sub_categories_user, orm_get_items,)
 
 from user_private.keyboards import (get_user_main_btns, get_user_catalog_btns,
-                                    get_user_sub_catalog_btns, get_items_btns,
-                                    get_user_words_catalog_btns, get_user_words_sub_catalog_btns,)
+                                    get_user_sub_catalog_btns, get_items_btns,)
 from common.paginator import Paginator
 
 
@@ -97,31 +95,6 @@ async def f_items(session, level, category, sub_category, page):
     return media, kbds
 
 
-async def f_words_catalog(session, level, menu_name, user_id):
-    banner = await orm_get_banner(session, "words_catalog")
-    image = InputMediaPhoto(media=banner.image, caption=banner.description)
-
-    words_categories = await orm_get_words_categories(session, user_id=user_id)
-    kbds = get_user_words_catalog_btns(level=level, words_categories=words_categories, sizes=(5,))
-
-    return image, kbds
-
-
-async def f_words_sub_catalog(session, level, words_category, menu_name, user_id):
-    banner = await orm_get_banner(session, "words_sub_catalog")
-    image = InputMediaPhoto(media=banner.image, caption=banner.description)
-
-    words_sub_categories = await orm_get_words_sub_categories(session,
-                                                              user_id=user_id,
-                                                              words_category=words_category,)
-    kbds = get_user_words_sub_catalog_btns(level=level,
-                                           words_category=words_category,
-                                           words_sub_categories=words_sub_categories,
-                                           sizes=(5,))
-
-    return image, kbds
-
-
 async def get_menu_content(
     session: AsyncSession,
     level: int,
@@ -130,7 +103,6 @@ async def get_menu_content(
     sub_category: int | None = None,
     page: int | None = None,
     user_id: int | None = None,
-    words_category: int | None = None,
 ):
     if level == 0:
         return await main_menu(session, level, menu_name)
@@ -140,7 +112,3 @@ async def get_menu_content(
         return await f_sub_catalog(session, level, category, menu_name)
     elif level == 3:
         return await f_items(session, level, category, sub_category, page)
-    elif level == 4:
-        return await f_words_catalog(session, level, menu_name, user_id)
-    elif level == 5:
-        return await f_words_sub_catalog(session, level, words_category, menu_name, user_id)
