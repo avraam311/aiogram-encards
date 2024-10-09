@@ -10,7 +10,6 @@ class MenuCB(CallbackData, prefix="menu"):
     sub_category: int | None = None
     page: int = 1
     item_id: int | None = None
-    spec_pack_check: str | None = None
 
 
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
@@ -21,9 +20,10 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
         "Спец. пакет": 'spec_pack',
     }
     for text, menu_name in btns.items():
-        if menu_name in ['catalog']:
+        if menu_name == 'catalog':
             keyboard.add(InlineKeyboardButton(text=text,
                                               callback_data=MenuCB(level=level+1, menu_name=menu_name).pack()))
+
         else:
             keyboard.add(InlineKeyboardButton(text=text,
                                               callback_data=MenuCB(level=level, menu_name=menu_name).pack()))
@@ -39,12 +39,12 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
             keyboard.add(InlineKeyboardButton(text=i.name,
                                               callback_data=MenuCB(level=level + 1,
                                                                    menu_name='sub_catalog',
-                                                                   category=i.id,
-                                                                   spec_pack_check='spec_pack_check',).pack()))
-        keyboard.add(InlineKeyboardButton(text=i.name,
-                                          callback_data=MenuCB(level=level + 1,
-                                                               menu_name='sub_catalog',
-                                                               category=i.id).pack()))
+                                                                   category=i.id,).pack()))
+        else:
+            keyboard.add(InlineKeyboardButton(text=i.name,
+                                              callback_data=MenuCB(level=level + 1,
+                                                                   menu_name='sub_catalog',
+                                                                   category=i.id).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
@@ -60,7 +60,8 @@ def get_user_sub_catalog_btns(*, level: int, category: int, sub_categories: list
                                           callback_data=MenuCB(level=level + 1,
                                                                menu_name=i.name,
                                                                category=category,
-                                                               sub_category=i.id).pack()))
+                                                               sub_category=i.id,
+                                                               spec_pack_status='spec_pack_status',).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад",
                                       callback_data=MenuCB(level=level - 1, menu_name='catalog').pack()))
@@ -101,7 +102,7 @@ def get_items_btns(
                                                     menu_name=menu_name,
                                                     category=category,
                                                     sub_category=sub_category,
-                                                    page=page + 1).pack()))
+                                                    page=page + 1,).pack()))
 
             elif menu_name == "previous":
                 row.append(InlineKeyboardButton(text=text,
@@ -110,7 +111,7 @@ def get_items_btns(
                                                     menu_name=menu_name,
                                                     category=category,
                                                     sub_category=sub_category,
-                                                    page=page - 1).pack()))
+                                                    page=page - 1,).pack()))
 
         keyboard.row(*row)
 

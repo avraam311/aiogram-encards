@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+import time
 
 from database.models import Item, Banner, Category, SubCategory, User
 
@@ -135,10 +136,10 @@ async def orm_add_user(
         return True
 
 
-async def orm_change_spec_pack(
+async def orm_set_user_spec_pack(
     session: AsyncSession,
     user_id: int,
-    spec_pack: int = 0,
+    spec_pack: int,
 ):
     query = update(User).where(User.user_id == user_id).values(
         spec_pack=spec_pack,
@@ -147,8 +148,17 @@ async def orm_change_spec_pack(
     await session.commit()
 
 
-async def orm_check_user_spec_pack(session: AsyncSession, user_id: int):
+async def orm_get_user_spec_pack(session: AsyncSession, user_id: int):
     query = select(User).where(User.user_id == user_id)
-    result = await session.execute(query)
-    return result.scalar()
+    status = ((await session.execute(query)).scalar()).spec_pack
+    return status
+
+
+async def orm_status_user_spec_pack(session: AsyncSession, user_id: int):
+    query = select(User).where(User.user_id == user_id)
+    status = ((await session.execute(query)).scalar()).spec_pack
+    if status > int(time.time()):
+        return True
+    else:
+        return False
 ########################################################

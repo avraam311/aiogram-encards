@@ -3,8 +3,10 @@ from aiogram.filters import Command
 from aiogram.types import Message, LabeledPrice, PreCheckoutQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
+import time
+import datetime
 
-from database.requests import orm_change_spec_pack, orm_check_user_spec_pack
+from database.requests import orm_set_user_spec_pack, orm_status_user_spec_pack, orm_get_user_spec_pack
 
 import os
 
@@ -15,11 +17,35 @@ payment_router = Router()
 PRICE = LabeledPrice(label='Подписка на 1 месяц', amount=99*100)
 
 
-@payment_router.message(Command('buy_spec_pack'))
-async def commamd_buy_spec_pack(message: Message, bot: Bot, session: AsyncSession):
-    spec_pack_check = await orm_check_user_spec_pack(session, user_id=message.from_user.id)
-    if spec_pack_check.spec_pack == 1:
-        await message.answer(text='У вас уже есть спец. пакет, просто наслаждайтесь!')
+def days_to_seconds(days):
+    return days*24*60*60
+
+
+def spec_pack_left_time(get_spec_pack_time):
+    time_now = int(time.time())
+    middle_time = int(get_spec_pack_time) - time_now
+
+    if middle_time <= 0:
+        return False
+    else:
+        dt = str(datetime.timedelta(seconds=middle_time))
+        dt = dt.replace('days', 'дней')
+        dt = dt.replace('day', 'день')
+        dt = dt.replace('2 days', '2 дня')
+        dt = dt.replace('3 days', '3 дня')
+        dt = dt.replace('4 days', '4 дня')
+        return dt
+
+
+@payment_router.message(F.text == 'spec_pack')
+@payment_router.message(Command('spec_pack'))
+async def buy_spec_pack(message: Message, bot: Bot, session: AsyncSession):
+    spec_pack_status = await orm_status_user_spec_pack(session, user_id=message.from_user.id)
+    spec_pack_time = await orm_get_user_spec_pack(session, user_id=message.from_user.id)
+    if spec_pack_status:
+        await message.answer(text=f'У вас уже есть спец. пакет на '
+                                  f'{spec_pack_left_time(spec_pack_time)}'
+                                  f', просто наслаждайтесь!')
         return
 
     if os.getenv('PAYMENTS_TOKEN').split(':')[1] == 'TEST':
@@ -63,7 +89,10 @@ async def f_pre_checkout_query(pre_checkout_query: PreCheckoutQuery, bot: Bot):
 
 @payment_router.message(F.successful_payment)
 async def successful_payment(message: Message, session: AsyncSession):
-    payment_message = (f'Спасибо за оплату {message.successful_payment.total_amount // 100} '
-                       f'{message.successful_payment.currency}.')
-    await message.answer(payment_message)
-    await orm_change_spec_pack(session, user_id=message.from_user.id, spec_pack=1)
+    if message.successful_payment.invoice_payload == 'test-invoice-payload':
+        payment_message = (f'Спасибо за оплату ({message.successful_payment.total_amount // 100} '
+                           f'{message.successful_payment.currency}).'
+                           f'\nПодписка на 1 месяц оформлена)')
+        spec_pack_time = int(time.time()) + days_to_seconds(30)
+        await message.answer(payment_message)
+        await orm_set_user_spec_pack(session, user_id=message.from_user.id, spec_pack=spec_pack_time)

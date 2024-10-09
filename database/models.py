@@ -64,5 +64,5 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(String(150), nullable=True)
     last_name: Mapped[str] = mapped_column(String(150), nullable=True)
     phone: Mapped[str] = mapped_column(String(13), nullable=True)
-    spec_pack: Mapped[int] = mapped_column(Integer, nullable=False)
+    spec_pack: Mapped[int] = mapped_column(BigInteger, nullable=False)
 ###############################################

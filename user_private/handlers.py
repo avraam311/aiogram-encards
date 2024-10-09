@@ -4,7 +4,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.requests import orm_add_user, orm_check_user_spec_pack
+from database.requests import orm_add_user, orm_status_user_spec_pack
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 
@@ -37,10 +37,12 @@ async def command_start(message: Message, session: AsyncSession) -> None:
 
 @user_router.callback_query(MenuCB.filter())
 async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: AsyncSession):
-    if callback_data.spec_pack_check == 'spec_pack_check':
-        spec_pack_check = await orm_check_user_spec_pack(session, user_id=callback.from_user.id)
-        if spec_pack_check.spec_pack == 0:
-            await callback.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее!',
+    if callback_data.category == 5:
+        spec_pack_check = await orm_status_user_spec_pack(session, user_id=callback.from_user.id)
+        if not spec_pack_check:
+            await callback.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее!'
+                                       'Отправьте команду \"Спец. пакет\" из меню или напишите вручную'
+                                       '\"spec_pack\"',
                                   show_alert=True,)
             return
 
