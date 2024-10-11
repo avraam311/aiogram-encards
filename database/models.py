@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, DateTime, func, BigInteger, Integer
+from sqlalchemy import String, Text, ForeignKey, DateTime, func, BigInteger
 
 
 ################ ANNOTATION MODELS ################

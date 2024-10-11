@@ -22,7 +22,7 @@ from database.engine import create_db, drop_all, session_maker
 from middlewares.db import DataBaseSession
 
 
-bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=os.getenv('TOKEN'), proxy="http://proxy.server:3128", default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()
 
@@ -49,7 +49,8 @@ async def main():
 
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
-    await bot.set_my_description('Hello, here you can learn English effectively, good luck!')
+    await bot.set_my_description('Ассаляму 1аляйкум, это бот для изучения английского языка максимально эффективно,'
+                                 'пользы и удачи!💟')
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
