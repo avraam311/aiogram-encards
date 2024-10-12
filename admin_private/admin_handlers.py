@@ -31,11 +31,12 @@ async def admin_features(message: Message, session: AsyncSession):
 
 
 @admin_router.message(F.text == "Ничего🌊")
-async def nth(message: Message) -> None:
+async def nth(message: Message, state: FSMContext) -> None:
     await message.answer(
         message.text,
         reply_markup=ReplyKeyboardRemove(),
     )
+    await state.set_state(None)
 
 
 @admin_router.callback_query(F.data.startswith('sub_category_'))
@@ -58,8 +59,8 @@ async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
                 sizes=(2,)
             ),
         )
-    await callback.answer()
     await callback.message.answer("ОК, вот список⏫")
+    await callback.answer()
 
 
 @admin_router.callback_query(F.data.startswith("delete_"))
@@ -68,6 +69,7 @@ async def delete_item_callback(callback: CallbackQuery, session: AsyncSession):
     await orm_delete_item(session, int(item_id))
 
     await callback.message.answer("Удаление прошло успешно✅")
+    await callback.message.delete()
 
 
 ################# Микро FSM для загрузки/изменения баннеров ############################
@@ -77,7 +79,7 @@ class AddItemBanner(StatesGroup):
 
 
 # Отправляем перечень информационных страниц бота и становимся в состояние отправки photo
-@admin_router.message(StateFilter(None), F.text == 'Добавить/Изменить баннер➕')
+@admin_router.message(StateFilter(None), F.text == 'Добавить/Изменить баннер🔂')
 async def add_image2(message: Message, state: FSMContext, session: AsyncSession):
     pages_names = [page.name for page in await orm_get_info_pages(session)]
     await message.answer(f"Отправьте изображение баннера📷\n\nВ описании укажите для какой страницы:\
@@ -120,8 +122,8 @@ async def add_banner2(message: Message):
 ######################### FSM для дабавления/изменения медиа админом ###################
 
 class AddItem(StatesGroup):
-    item_media = State()
     sub_category = State()
+    item_media = State()
     media_text = State()
 
     item_for_change = None
@@ -134,7 +136,7 @@ class AddItem(StatesGroup):
     }
 
 
-@admin_router.callback_query(StateFilter(None), F.data.startswith("edit_"))
+@admin_router.callback_query(StateFilter(None), F.data.startswith("change_"))
 async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
 
     item_id = callback.data.split("_")[-1]
@@ -142,21 +144,20 @@ async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session
     item_for_change = await orm_get_item(session, int(item_id))
 
     AddItem.item_for_change = item_for_change
+    AddItem.sub_category_filter = item_for_change.sub_category_id
 
-    await callback.message.answer(
-        'Отправьте медиа🎦',
-        reply_markup=ReplyKeyboardRemove(),
-    )
+    await callback.message.answer((f'Отправьте изображение📷' if AddItem.sub_category_filter not in [2, 7]
+                                   else 'Отправьте видео🎥'), reply_markup=kb.admin_cancel)
+
     await state.set_state(AddItem.item_media)
 
 
 # Становимся в состояние ожидания выбора категории
 @admin_router.message(StateFilter(None), F.text == 'Добавить медиа➕')
 async def add_item(message: Message, state: FSMContext, session: AsyncSession):
-    await state.set_state(AddItem.item_media)
     await message.answer(
         'Выберите...',
-        reply_markup=kb.admin_back_cancel,
+        reply_markup=kb.admin_cancel,
     )
     sub_categories = await orm_get_sub_categories_admin(session)
     btns = {sub_category.name: str(sub_category.id) for sub_category in sub_categories}
@@ -176,10 +177,6 @@ async def cancel(message: Message, state: FSMContext) -> None:
     if AddItem.item_for_change:
         AddItem.item_for_change = None
     await state.clear()
-    await message.answer(
-        message.text,
-        reply_markup=kb.admin_main,
-    )
 
     await state.clear()
     await message.answer("Действия отменены✅", reply_markup=kb.admin_main)
@@ -190,7 +187,17 @@ async def cancel(message: Message, state: FSMContext) -> None:
 async def back_step(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
 
-    if current_state == AddItem.item_media:
+    if isinstance(AddItem.sub_category_filter, int) and current_state == AddItem.item_media:
+        await message.answer("Нет шага назад, выполните текущий шаг или нажмите \"Отмена\"❌.",
+                             reply_markup=kb.admin_cancel)
+        return
+
+    elif current_state == AddItem.item_media and AddItem.sub_category_filter:
+        await state.set_state(AddItem.sub_category)
+        await message.answer("Выберите подкатегорию снова⏫")
+        return
+
+    elif current_state == AddItem.sub_category:
         await message.answer("Нет шага назад, выполните текущий шаг или нажмите \"Отмена\"❌.",
                              reply_markup=kb.admin_cancel)
         return
@@ -231,19 +238,30 @@ async def error(message: Message):
 
 @admin_router.message(AddItem.item_media, or_f(F.text, F.photo))
 async def add_item_media(message: Message, state: FSMContext) -> None:
+
     if message.text or message.photo:
+
         if message.text and message.text == ".":
             await state.update_data(item_media=AddItem.item_for_change.item_media)
-        elif AddItem.sub_category_filter == 'photo' and not message.text:
-            await state.update_data(item_media=message.photo[-1].file_id)
 
-            AddItem.sub_category_filter = None
+        elif AddItem.sub_category_filter == 'photo':
+            await state.update_data(item_media=message.photo[-1].file_id)
 
             await message.answer(
                 'Отправьте текст к изображению🖊',
                 reply_markup=kb.admin_back_cancel,
             )
             await state.set_state(AddItem.media_text)
+
+        elif isinstance(AddItem.sub_category_filter, int):
+            await state.update_data(item_media=message.photo[-1].file_id)
+
+            await message.answer(
+                'Отправьте текст к изображению🖊',
+                reply_markup=kb.admin_back_cancel,
+            )
+            await state.set_state(AddItem.media_text)
+
         else:
             await message.answer(
                 'Следуйте инструкциям❗',
@@ -252,19 +270,30 @@ async def add_item_media(message: Message, state: FSMContext) -> None:
 
 @admin_router.message(AddItem.item_media, or_f(F.text, F.video))
 async def add_item_media(message: Message, state: FSMContext) -> None:
+
     if message.text or message.video:
+
         if message.text and message.text == ".":
             await state.update_data(item_media=AddItem.item_for_change.item_media)
-        elif AddItem.sub_category_filter == 'video' and not message.text:
-            await state.update_data(item_media=message.video.file_id)
 
-            AddItem.sub_category_filter = None
+        elif AddItem.sub_category_filter == 'video':
+            await state.update_data(item_media=message.video.file_id)
 
             await message.answer(
                 'Отправьте текст к видео🖊',
                 reply_markup=kb.admin_back_cancel,
             )
             await state.set_state(AddItem.media_text)
+
+        elif isinstance(AddItem.sub_category_filter, int):
+            await state.update_data(item_media=message.photo[-1].file_id)
+
+            await message.answer(
+                'Отправьте текст к видео🖊',
+                reply_markup=kb.admin_back_cancel,
+            )
+            await state.set_state(AddItem.media_text)
+
         else:
             await message.answer(
                 'Следуйте инструкциям❗',
@@ -302,6 +331,7 @@ async def add_media_text(message: Message, state: FSMContext, session: AsyncSess
         await state.clear()
 
     AddItem.item_for_change = None
+    AddItem.sub_category_filter = None
 
 
 @admin_router.message(AddItem.media_text)
