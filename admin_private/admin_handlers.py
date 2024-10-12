@@ -80,7 +80,7 @@ class AddItemBanner(StatesGroup):
 @admin_router.message(StateFilter(None), F.text == 'Добавить/Изменить баннер➕')
 async def add_image2(message: Message, state: FSMContext, session: AsyncSession):
     pages_names = [page.name for page in await orm_get_info_pages(session)]
-    await message.answer(f"Отправьте фото баннера📷\n\nВ описании укажите для какой страницы:\
+    await message.answer(f"Отправьте изображение баннера📷\n\nВ описании укажите для какой страницы:\
                          \n\n{', '.join(pages_names)}⭕",
                          reply_markup=kb.admin_cancel)
     await state.set_state(AddItemBanner.image)
@@ -185,8 +185,7 @@ async def cancel(message: Message, state: FSMContext) -> None:
     await message.answer("Действия отменены✅", reply_markup=kb.admin_main)
 
 
-# Вторая реализация кнопки назад по состояниям
-# Потом оставлю лучший вариант
+# Полезная реализация кнопки назад по состояниям
 @admin_router.message(StateFilter("*"), F.text == "Назад🔙")
 async def back_step(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
@@ -217,7 +216,7 @@ async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
                               await orm_get_sub_categories_admin(session)]:
         await callback.answer()
         await state.update_data(sub_category_id=callback.data)
-        await callback.message.answer((f'Отправьте фото📷' if AddItem.sub_category_filter == 'photo'
+        await callback.message.answer((f'Отправьте изображение📷' if AddItem.sub_category_filter == 'photo'
                                        else 'Отправьте видео🎥'), reply_markup=kb.admin_back_cancel)
     else:
         await callback.message.answer('Выберите подкатегорию из кнопок⏫')
