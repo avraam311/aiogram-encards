@@ -15,9 +15,9 @@ class MenuCB(CallbackData, prefix="menu"):
 def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
     btns = {
-        "Изучать": 'catalog',
-        "Прочитать!": 'read!',
-        "Спец. пакет": 'spec_pack',
+        "Изучать📓": 'catalog',
+        "Прочитать❗": 'read!',
+        "Спец. пакет👑": 'spec_pack',
     }
     for text, menu_name in btns.items():
         if menu_name == 'catalog':
@@ -46,7 +46,7 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
                                                                    menu_name='sub_catalog',
                                                                    category=i.id).pack()))
 
-    keyboard.add(InlineKeyboardButton(text="Назад",
+    keyboard.add(InlineKeyboardButton(text="Назад🔙",
                                       callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
 
     return keyboard.adjust(*sizes).as_markup()
@@ -63,9 +63,9 @@ def get_user_sub_catalog_btns(*, level: int, category: int, sub_categories: list
                                                                sub_category=i.id,
                                                                spec_pack_status='spec_pack_status',).pack()))
 
-    keyboard.add(InlineKeyboardButton(text="Назад",
+    keyboard.add(InlineKeyboardButton(text="Назад🔙",
                                       callback_data=MenuCB(level=level - 1, menu_name='catalog').pack()))
-    keyboard.add(InlineKeyboardButton(text="На главную",
+    keyboard.add(InlineKeyboardButton(text="На главную🏠",
                                       callback_data=MenuCB(level=0, menu_name='main').pack()))
 
     return keyboard.adjust(*sizes).as_markup()
@@ -84,11 +84,11 @@ def get_items_btns(
 
     keyboard.adjust(*sizes)
 
-    keyboard.add(InlineKeyboardButton(text="Назад",
+    keyboard.add(InlineKeyboardButton(text="Назад🔙",
                                       callback_data=MenuCB(level=level - 1,
                                                            menu_name='sub_catalog',
                                                            category=category).pack()))
-    keyboard.add(InlineKeyboardButton(text="На главную",
+    keyboard.add(InlineKeyboardButton(text="На главную🏠",
                                       callback_data=MenuCB(level=0,
                                                            menu_name='main').pack()))
 
