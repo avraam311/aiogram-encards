@@ -20,6 +20,7 @@ from user_private.payment import payment_router
 from common.commands import private
 from database.engine import create_db, drop_all, session_maker
 from middlewares.db import DataBaseSession
+from constansts import DESCRIPTION, SHORT_DESCRIPTION
 
 
 bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -49,10 +50,8 @@ async def main():
 
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
-    await bot.set_my_short_description('Автор: t.me/avraam311👑\n\n'
-                                       'По любым вопросам, найденным багам и предложениям писать автору📱')
-    await bot.set_my_description('Ассаляму 1аляйкум, это бот для изучения английского языка максимально эффективно, '
-                                 'пользы и удачи!❤')
+    await bot.set_my_short_description(SHORT_DESCRIPTION)
+    await bot.set_my_description(DESCRIPTION)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 

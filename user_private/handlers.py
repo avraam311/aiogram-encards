@@ -8,6 +8,7 @@ from database.requests import orm_add_user, orm_status_user_spec_pack
 from user_private.menu_processing import get_menu_content
 from user_private.keyboards import MenuCB
 from common.get_keyboard_func import get_keyboard
+from constansts import HELP
 
 
 user_router = Router()
@@ -15,8 +16,7 @@ user_router = Router()
 
 @user_router.message(Command('help'))
 async def commamd_help(message: Message):
-    await message.answer('Для изучения английского языка нужно развивать все навыки. Поэтому я предоставил вам '
-                         'эту возможность. Приятного изучения!❤')
+    await message.answer(HELP)
 
 
 @user_router.message(CommandStart())
@@ -27,7 +27,7 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     spec_pack_check = await orm_status_user_spec_pack(session, user_id=message.from_user.id)
     if not spec_pack_check:
         await message.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее! '
-                                  'Отправьте команду \"Спец. пакет\" из меню, напишите вручную '
+                                  'Отправьте команду \"\\spec_pack\" из меню, напишите вручную '
                                   '\"Спец. пакет\" или нажмите на кнопку \"Купить спец. пакет👑\"',
                              reply_markup=get_keyboard('Купить спец. пакет👑'))
 
@@ -48,7 +48,7 @@ async def user_menu(callback: CallbackQuery, callback_data: MenuCB, session: Asy
     if callback_data.category == 5:
         if not spec_pack_check:
             await callback.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее! '
-                                       'Отправьте команду \"Спец. пакет\" из меню или напишите вручную '
+                                       'Отправьте команду \"\\spec_pack\" из меню или напишите вручную '
                                        '\"Спец. пакет\".👑',
                                   show_alert=True,)
             return
