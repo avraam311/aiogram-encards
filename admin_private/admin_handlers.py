@@ -55,19 +55,20 @@ async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
 
     sub_category_id = callback.data.split('_')[-1]
 
-    items = redis_db.get_items_dict(sub_category_id)
+    items = redis_db.get_items_list(sub_category_id)
     if items is None:
         items = await orm_get_items(session, int(sub_category_id))
         redis_db.set_items_list(sub_category_id, items)
 
     for item in items:
+        item_id = item[0]
         await answer_photo_or_video(
-            item.item_media,
-            caption=f"<strong>{item.media_text}</strong>\n",
+            item[1],
+            caption=f"<strong>{item[2]}</strong>\n",
             reply_markup=get_inline_keyboard(
                 btns={
-                    "Удалить🧺": f"delete_{item.id}",
-                    "Изменить✅": f"change_{item.id}",
+                    "Удалить🧺": f"delete_{item_id}",
+                    "Изменить✅": f"change_{item_id}",
                 },
                 sizes=(2,)
             ),
@@ -189,7 +190,6 @@ async def cancel(message: Message, state: FSMContext) -> None:
         return
     if AddItem.item_for_change:
         AddItem.item_for_change = None
-    await state.clear()
 
     await state.clear()
     await message.answer("Действия отменены✅", reply_markup=kb.admin_main)
