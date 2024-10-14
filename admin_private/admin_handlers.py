@@ -1,3 +1,5 @@
+import os
+
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -13,14 +15,19 @@ from database.requests import (orm_add_item, orm_get_item, orm_get_items, orm_de
                                orm_get_sub_categories_admin)
 from common.get_keyboard_func import get_inline_keyboard
 
+from cache import Cache
+
+redis_db = Cache(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0)
+
 
 admin_router = Router()
 admin_router.message.filter(IsAdmin())
 
 
 @admin_router.message(Command("admin"))
-async def admin_features(message: Message):
+async def admin_features(message: Message, state: FSMContext):
     await message.answer("Что хотите сделать❓", reply_markup=kb.admin_main)
+    await state.clear()
 
 
 @admin_router.message(F.text == 'Просмотреть🕶')
@@ -47,7 +54,13 @@ async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
         answer_photo_or_video = callback.message.answer_photo
 
     sub_category_id = callback.data.split('_')[-1]
-    for item in await orm_get_items(session, int(sub_category_id)):
+
+    items = redis_db.get_items_dict(sub_category_id)
+    if items is None:
+        items = await orm_get_items(session, int(sub_category_id))
+        redis_db.set_items_list(sub_category_id, items)
+
+    for item in items:
         await answer_photo_or_video(
             item.item_media,
             caption=f"<strong>{item.media_text}</strong>\n",
@@ -242,8 +255,12 @@ async def add_item_media(message: Message, state: FSMContext) -> None:
     if message.text or message.photo:
 
         if message.text and message.text == ".":
-            await state.update_data(item_media=AddItem.item_for_change.item_media)
-
+            if AddItem.item_for_change:
+                await state.update_data(item_media=AddItem.item_for_change.item_media)
+            else:
+                await message.answer(
+                    'Следуйте инструкциям❗',
+                )
         elif AddItem.sub_category_filter == 'photo':
             await state.update_data(item_media=message.photo[-1].file_id)
 
@@ -274,8 +291,12 @@ async def add_item_media(message: Message, state: FSMContext) -> None:
     if message.text or message.video:
 
         if message.text and message.text == ".":
-            await state.update_data(item_media=AddItem.item_for_change.item_media)
-
+            if AddItem.item_for_change:
+                await state.update_data(item_media=AddItem.item_for_change.item_media)
+            else:
+                await message.answer(
+                    'Следуйте инструкциям❗',
+                )
         elif AddItem.sub_category_filter == 'video':
             await state.update_data(item_media=message.video.file_id)
 
@@ -309,7 +330,7 @@ async def error(message: Message) -> None:
 
 @admin_router.message(AddItem.media_text, F.text)
 async def add_media_text(message: Message, state: FSMContext, session: AsyncSession) -> None:
-    if message.text == ".":
+    if message.text == "." and AddItem.item_for_change:
         await state.update_data(media_text=AddItem.item_for_change.media_text)
     else:
         await state.update_data(media_text=message.text)
