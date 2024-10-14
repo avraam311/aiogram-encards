@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aiogram.types import InputMediaPhoto, InputMediaVideo
@@ -8,6 +10,10 @@ from database.requests import (orm_get_banner, orm_get_categories,
 from user_private.keyboards import (get_user_main_btns, get_user_catalog_btns,
                                     get_user_sub_catalog_btns, get_items_btns,)
 from common.paginator import Paginator
+
+from cache import Cache
+
+redis_db = Cache(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0)
 
 
 def pages(paginator: Paginator):
@@ -34,7 +40,11 @@ async def f_catalog(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    categories = await orm_get_categories(session)
+    categories = redis_db.get_categories_dict()
+    if categories is None:
+        categories = await orm_get_categories(session)
+        redis_db.set_categories_list(categories)
+
     kbds = get_user_catalog_btns(level=level, categories=categories)
 
     return image, kbds

@@ -32,11 +32,11 @@ async def admin_features(message: Message, state: FSMContext):
 
 @admin_router.message(F.text == 'Просмотреть🕶')
 async def admin_features(message: Message, session: AsyncSession):
-    sub_categories = redis_db.get_sub_categories_dict_admin()
+    sub_categories = await redis_db.get_sub_categories_dict_admin()
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
-        redis_db.set_sub_categories_list_admin(sub_categories)
+        await redis_db.set_sub_categories_list_admin(sub_categories)
 
     btns = {sub_category.name: f'sub_category_{sub_category.id}' for sub_category in sub_categories}
     await message.answer("Выберите подкатегорию:", reply_markup=get_inline_keyboard(btns=btns))
@@ -60,10 +60,10 @@ async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
 
     sub_category_id = callback.data.split('_')[-1]
 
-    items = redis_db.get_items_list(sub_category_id)
+    items = await redis_db.get_items_list(sub_category_id)
     if items is None:
         items = await orm_get_items(session, int(sub_category_id))
-        redis_db.set_items_list(sub_category_id, items)
+        await redis_db.set_items_list(sub_category_id, items)
 
     for item in items:
         item_id = item[0]
@@ -178,11 +178,11 @@ async def add_item(message: Message, state: FSMContext, session: AsyncSession):
         'Выберите...',
         reply_markup=kb.admin_cancel,
     )
-    sub_categories = redis_db.get_sub_categories_dict_admin()
+    sub_categories = await redis_db.get_sub_categories_dict_admin()
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
-        redis_db.set_sub_categories_list_admin(sub_categories)
+        await redis_db.set_sub_categories_list_admin(sub_categories)
 
     btns = {sub_category.name: str(sub_category.id) for sub_category in sub_categories}
     await message.answer("...подкатегорию⭕",
@@ -242,11 +242,11 @@ async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
     else:
         AddItem.sub_category_filter = 'photo'
 
-    sub_categories = redis_db.get_sub_categories_dict_admin()
+    sub_categories = await redis_db.get_sub_categories_dict_admin()
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
-        redis_db.set_sub_categories_list_admin(sub_categories)
+        await redis_db.set_sub_categories_list_admin(sub_categories)
 
     if int(callback.data) in [sub_category.id for sub_category in sub_categories]:
         await callback.answer()
