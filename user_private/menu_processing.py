@@ -40,7 +40,7 @@ async def f_catalog(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    categories = redis_db.get_categories_dict()
+    categories = redis_db.get_categories_list()
     if categories is None:
         categories = await orm_get_categories(session)
         redis_db.set_categories_list(categories)
@@ -54,14 +54,22 @@ async def f_sub_catalog(session, level, category, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    sub_categories = await orm_get_sub_categories_user(session, category_id=category)
+    sub_categories = redis_db.get_sub_categories_list_user(category)
+
+    if sub_categories is None:
+        sub_categories = await orm_get_sub_categories_user(session, category)
+        redis_db.set_sub_categories_list_user(sub_categories, category)
+
     kbds = get_user_sub_catalog_btns(level=level, category=category, sub_categories=sub_categories)
 
     return image, kbds
 
 
 async def f_items(session, level, category, sub_category, page):
-    items = await orm_get_items(session, sub_category_id=sub_category)
+    items = redis_db.get_items_list(sub_category)
+    if items is None:
+        items = await orm_get_items(session, int(sub_category))
+        redis_db.set_items_list(items, sub_category)
 
     if not items:
         banner = await orm_get_banner(session, "media")
@@ -87,8 +95,8 @@ async def f_items(session, level, category, sub_category, page):
         item = paginator.get_page()[0]
 
         media = input_media_photo_or_video(
-            media=item.item_media,
-            caption=f"<strong>{item.media_text}</strong>\n\n"
+            media=item[1],
+            caption=f"<strong>{item[2]}</strong>\n\n"
                     f"<strong>{paginator.page} из {paginator.pages}</strong>",
             )
 

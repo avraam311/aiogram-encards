@@ -34,17 +34,17 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
 def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
 
-    for i in categories:
-        if i.name == 'Спец. пакет':
-            keyboard.add(InlineKeyboardButton(text=i.name,
+    for category in categories:
+        if category[1] == 'Спец. пакет':
+            keyboard.add(InlineKeyboardButton(text=category[1],
                                               callback_data=MenuCB(level=level + 1,
                                                                    menu_name='sub_catalog',
-                                                                   category=i.id,).pack()))
+                                                                   category=category[0],).pack()))
         else:
-            keyboard.add(InlineKeyboardButton(text=i.name,
+            keyboard.add(InlineKeyboardButton(text=category[1],
                                               callback_data=MenuCB(level=level + 1,
                                                                    menu_name='sub_catalog',
-                                                                   category=i.id).pack()))
+                                                                   category=category[0]).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад🔙",
                                       callback_data=MenuCB(level=level - 1, menu_name='main').pack()))
@@ -55,12 +55,12 @@ def get_user_catalog_btns(*, level: int, categories: list, sizes: tuple[int] = (
 def get_user_sub_catalog_btns(*, level: int, category: int, sub_categories: list, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
 
-    for i in sub_categories:
-        keyboard.add(InlineKeyboardButton(text=i.name,
+    for sub_category in sub_categories:
+        keyboard.add(InlineKeyboardButton(text=sub_category[1],
                                           callback_data=MenuCB(level=level + 1,
-                                                               menu_name=i.name,
+                                                               menu_name=sub_category[1],
                                                                category=category,
-                                                               sub_category=i.id,
+                                                               sub_category=sub_category[0],
                                                                spec_pack_status='spec_pack_status',).pack()))
 
     keyboard.add(InlineKeyboardButton(text="Назад🔙",

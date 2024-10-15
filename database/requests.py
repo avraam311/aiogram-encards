@@ -49,7 +49,11 @@ async def orm_create_categories(session: AsyncSession, categories: list):
 async def orm_get_categories(session: AsyncSession):
     query = select(Category)
     result = await session.execute(query)
-    return result.scalars().all()
+    categories = []
+    for i in result.scalars().all():
+        category = [i.id, i.name]
+        categories.append(category)
+    return categories
 ########################################################
 
 
@@ -67,13 +71,21 @@ async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict)
 async def orm_get_sub_categories_user(session: AsyncSession, category_id):
     query = select(SubCategory).where(SubCategory.category_id == int(category_id))
     result = await session.execute(query)
-    return result.scalars().all()
+    sub_categories = []
+    for i in result.scalars().all():
+        category = [i.id, i.name, i.category_id]
+        sub_categories.append(category)
+    return sub_categories
 
 
 async def orm_get_sub_categories_admin(session: AsyncSession):
     query = select(SubCategory)
     result = await session.execute(query)
-    return result.scalars().all()
+    sub_categories = []
+    for i in result.scalars().all():
+        category = [i.id, i.name]
+        sub_categories.append(category)
+    return sub_categories
 
 ########################################################
 
@@ -92,7 +104,11 @@ async def orm_add_item(session: AsyncSession, data: dict):
 async def orm_get_items(session: AsyncSession, sub_category_id):
     query = select(Item).where(Item.sub_category_id == int(sub_category_id))
     result = await session.execute(query)
-    return result.scalars().all()
+    items = []
+    for i in result.scalars().all():
+        item = [i.id, i.item_media, i.media_text, i.sub_category_id]
+        items.append(item)
+    return items
 
 
 async def orm_get_item(session: AsyncSession, item_id: int):
