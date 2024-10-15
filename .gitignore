@@ -8,5 +8,6 @@ admin_private/__pycache__/*
 database/__pycache__/*
 common/__pycache__/*
 middlewares/__pycache__/*
+tests/__pycache__/*
 
 images/*
