@@ -78,11 +78,10 @@ def get_items_btns(
         sub_category: int | None,
         page: int | None,
         pagination_btns: dict | None,
-        sizes: tuple[int] = (2,)
+        sizes: tuple = (2,),
+        items_len: int | None = None,
 ):
     keyboard = InlineKeyboardBuilder()
-
-    keyboard.adjust(*sizes)
 
     keyboard.add(InlineKeyboardButton(text="Назад🔙",
                                       callback_data=MenuCB(level=level - 1,
@@ -120,7 +119,8 @@ def get_items_btns(
                                                     menu_name=menu_name,
                                                     category=category,
                                                     sub_category=sub_category,
-                                                    page=page + 10,).pack()))
+                                                    page=((page + 10) if items_len - page >= 10
+                                                          else items_len), ).pack()))
 
             elif menu_name == "previous_10":
                 row.append(InlineKeyboardButton(text=text,
@@ -129,8 +129,11 @@ def get_items_btns(
                                                     menu_name=menu_name,
                                                     category=category,
                                                     sub_category=sub_category,
-                                                    page=page - 10,).pack()))
+                                                    page=((page - 10) if page > 10
+                                                          else 1),).pack()))
 
         keyboard.row(*row)
+
+        keyboard.adjust(*sizes)
 
     return keyboard.as_markup()

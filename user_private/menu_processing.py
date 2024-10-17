@@ -27,7 +27,7 @@ def pages(paginator: Paginator):
     if paginator.has_previous_10():
         btns["⏪ -10"] = "previous_10"
 
-    if paginator.has_next_10():
+    if paginator.has_next_10:
         btns["+10 ⏩"] = "next_10"
 
     return btns
@@ -86,9 +86,12 @@ async def f_items(session, level, category, sub_category, page):
             sub_category=None,
             page=None,
             pagination_btns=None,
+            items_len=None
         )
 
     else:
+        items_len = len(items)
+
         if int(sub_category) in [2, 7]:
             input_media_photo_or_video = InputMediaVideo
         else:
@@ -111,6 +114,8 @@ async def f_items(session, level, category, sub_category, page):
             sub_category=sub_category,
             page=page,
             pagination_btns=pagination_btns,
+            sizes=(2, 2, 2),
+            items_len=items_len,
         )
 
     return media, kbds
