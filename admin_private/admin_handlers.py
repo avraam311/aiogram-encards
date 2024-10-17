@@ -1,5 +1,3 @@
-import os
-
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -14,15 +12,16 @@ from database.requests import (orm_add_item, orm_get_item, orm_get_items, orm_de
                                orm_update_item, orm_get_info_pages, orm_change_banner_image,
                                orm_get_sub_categories_admin)
 from common.get_keyboard_func import get_inline_keyboard
-
 from cache import Cache
+import config
 
-redis_db = Cache(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0)
 
+config = config.Config()
+
+redis_db = Cache(host=config.redis_host, port=config.redis_port, db=0)
 
 admin_router = Router()
 admin_router.message.filter(IsAdmin())
-
 
 @admin_router.message(Command("admin"))
 async def admin_features(message: Message, state: FSMContext):
@@ -178,7 +177,7 @@ async def add_item(message: Message, state: FSMContext, session: AsyncSession):
         'Выберите...',
         reply_markup=kb.admin_cancel,
     )
-    sub_categories = redis_db.get_sub_categories_dict_admin()
+    sub_categories = redis_db.get_sub_categories_list_admin()
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
@@ -242,7 +241,7 @@ async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
     else:
         AddItem.sub_category_filter = 'photo'
 
-    sub_categories = redis_db.get_sub_categories_dict_admin()
+    sub_categories = redis_db.get_sub_categories_list_admin()
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)

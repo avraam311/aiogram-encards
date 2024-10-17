@@ -7,15 +7,14 @@ import time
 import datetime
 
 from database.requests import orm_set_user_spec_pack, orm_status_user_spec_pack, orm_get_user_spec_pack
+import config
 
-import os
 
+config = config.Config()
 
 payment_router = Router()
 
-
 PRICE = LabeledPrice(label='Подписка на 1 месяц👑', amount=99*100)
-
 
 def days_to_seconds(days):
     return days*24*60*60
@@ -52,7 +51,7 @@ async def buy_spec_pack(message: Message, bot: Bot, session: AsyncSession):
     await bot.send_invoice(chat_id=message.from_user.id,
                            title='Покупка спец. пакета👑',
                            description='Активация подписки на спец. пакет на 1 месяц👑',
-                           provider_token=os.getenv('PAYMENTS_TOKEN'),
+                           provider_token=config.payments_token,
                            currency='rub',
                            photo_url='https://drive.google.com/file/d/1Ej5E853v'
                                      'WeFwD-qSz64ui0urG8EzFUcc/view?usp=sharing',

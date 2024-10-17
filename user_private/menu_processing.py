@@ -1,20 +1,19 @@
-import os
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aiogram.types import InputMediaPhoto, InputMediaVideo
 
 from database.requests import (orm_get_banner, orm_get_categories,
                                orm_get_sub_categories_user, orm_get_items,)
-
 from user_private.keyboards import (get_user_main_btns, get_user_catalog_btns,
                                     get_user_sub_catalog_btns, get_items_btns,)
 from common.paginator import Paginator
-
 from cache import Cache
+import config
 
-redis_db = Cache(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0)
 
+config = config.Config()
+
+redis_db = Cache(host=config.redis_host, port=config.redis_port, db=0)
 
 def pages(paginator: Paginator):
     btns = dict()

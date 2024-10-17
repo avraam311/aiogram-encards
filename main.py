@@ -1,11 +1,4 @@
 import asyncio
-import os
-from dotenv import load_dotenv, find_dotenv
-
-
-load_dotenv(find_dotenv())
-
-
 import logging
 import platform
 
@@ -21,9 +14,12 @@ from common.commands import private
 from database.engine import create_db, drop_all, session_maker
 from middlewares.db import DataBaseSession
 from constansts import DESCRIPTION, SHORT_DESCRIPTION
+import config
 
 
-bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+config = config.Config()
+
+bot = Bot(token=config.telegram_api_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()
 

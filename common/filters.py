@@ -2,7 +2,10 @@ from aiogram.filters import Filter
 from aiogram import Bot
 from aiogram.types import Message
 
-import os
+import config
+
+
+config = config.Config()
 
 
 class IsAdmin(Filter):
@@ -10,7 +13,7 @@ class IsAdmin(Filter):
         pass
 
     async def __call__(self, message: Message, bot: Bot) -> bool:
-        if message.from_user.id != int(os.getenv('ADMIN_ID')):
+        if message.from_user.id != config.telegram_admin_id:
             await message.delete()
             return False
         return True
