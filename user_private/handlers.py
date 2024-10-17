@@ -24,12 +24,6 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     media, reply_markup = await get_menu_content(session, level=0, menu_name="main")
     await message.answer(message.text, reply_markup=ReplyKeyboardRemove())
     await message.answer_photo(media.media, caption=media.caption, reply_markup=reply_markup)
-    spec_pack_check = await orm_status_user_spec_pack(session, user_id=message.from_user.id)
-    if not spec_pack_check:
-        await message.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее! '
-                                  'Отправьте команду \"\\spec_pack\" из меню, напишите вручную '
-                                  '\"Спец. пакет\" или нажмите на кнопку \"Купить спец. пакет👑\"',
-                             reply_markup=get_keyboard('Купить спец. пакет👑'))
 
     user = message.from_user
     first_message = await orm_add_user(
@@ -40,6 +34,13 @@ async def command_start(message: Message, session: AsyncSession) -> None:
     )
     if first_message:
         await message.answer(f"Пользователь {message.from_user.first_name} добавлен в базу данных✅")
+
+    spec_pack_check = await orm_status_user_spec_pack(session, user_id=message.from_user.id)
+    if not spec_pack_check:
+        await message.answer(text='Купите спец. пакет, чтобы изучать английский еще эффективнее! '
+                                  'Отправьте команду \"\\spec_pack\" из меню, напишите вручную '
+                                  '\"Спец. пакет\" или нажмите на кнопку \"Купить спец. пакет👑\"',
+                             reply_markup=get_keyboard('Купить спец. пакет👑'))
 
 
 @user_router.callback_query(MenuCB.filter())
