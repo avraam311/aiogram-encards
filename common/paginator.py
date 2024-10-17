@@ -30,6 +30,16 @@ class Paginator:
             return self.page - 1
         return False
 
+    def has_next_10(self):
+        if self.pages - self.page >= 10:
+            return self.page + 10
+        return False
+
+    def has_previous_10(self):
+        if self.page > 10:
+            return self.page - 10
+        return False
+
     def get_next(self):
         if self.page < self.pages:
             self.page += 1
@@ -41,3 +51,15 @@ class Paginator:
             self.page -= 1
             return self.__get_slice()
         raise IndexError(f'Previous page does not exist. Use has_previous() to check before.')
+
+    def get_next_10(self):
+        if self.pages - self.page >= 10:
+            self.page += 10
+            return self.get_page()
+        raise IndexError(f'+10 page does not exist. Use has_next_10() to check before.')
+
+    def get_previous_10(self):
+        if self.page > 10:
+            self.page -= 10
+            return self.__get_slice()
+        raise IndexError(f'-10 page does not exist. Use has_previous_10() to check before.')

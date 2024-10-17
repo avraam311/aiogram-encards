@@ -23,6 +23,7 @@ redis_db = Cache(host=config.redis_host, port=config.redis_port, db=0)
 admin_router = Router()
 admin_router.message.filter(IsAdmin())
 
+
 @admin_router.message(Command("admin"))
 async def admin_features(message: Message, state: FSMContext):
     await message.answer("Что хотите сделать❓", reply_markup=kb.admin_main)
@@ -177,13 +178,12 @@ async def add_item(message: Message, state: FSMContext, session: AsyncSession):
         'Выберите...',
         reply_markup=kb.admin_cancel,
     )
-    sub_categories = redis_db.get_sub_categories_list_admin()
+    sub_categories = None
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
-        redis_db.set_sub_categories_list_admin(sub_categories)
 
-    btns = {sub_category.name: str(sub_category.id) for sub_category in sub_categories}
+    btns = {sub_category[1]: str(sub_category[0]) for sub_category in sub_categories}
     await message.answer("...подкатегорию⭕",
                          reply_markup=get_inline_keyboard(btns=btns))
     await state.set_state(AddItem.sub_category)
@@ -241,13 +241,12 @@ async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
     else:
         AddItem.sub_category_filter = 'photo'
 
-    sub_categories = redis_db.get_sub_categories_list_admin()
+    sub_categories = None
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_admin(session)
-        redis_db.set_sub_categories_list_admin(sub_categories)
 
-    if int(callback.data) in [sub_category.id for sub_category in sub_categories]:
+    if int(callback.data) in [sub_category[0] for sub_category in sub_categories]:
         await callback.answer()
         await state.update_data(sub_category_id=callback.data)
         await callback.message.answer((f'Отправьте изображение📷' if AddItem.sub_category_filter == 'photo'

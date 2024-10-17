@@ -113,6 +113,24 @@ def get_items_btns(
                                                     sub_category=sub_category,
                                                     page=page - 1,).pack()))
 
+            elif menu_name == "next_10":
+                row.append(InlineKeyboardButton(text=text,
+                                                callback_data=MenuCB(
+                                                    level=level,
+                                                    menu_name=menu_name,
+                                                    category=category,
+                                                    sub_category=sub_category,
+                                                    page=page + 10,).pack()))
+
+            elif menu_name == "previous_10":
+                row.append(InlineKeyboardButton(text=text,
+                                                callback_data=MenuCB(
+                                                    level=level,
+                                                    menu_name=menu_name,
+                                                    category=category,
+                                                    sub_category=sub_category,
+                                                    page=page - 10,).pack()))
+
         keyboard.row(*row)
 
     return keyboard.as_markup()

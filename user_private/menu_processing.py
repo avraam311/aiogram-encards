@@ -15,6 +15,7 @@ config = config.Config()
 
 redis_db = Cache(host=config.redis_host, port=config.redis_port, db=0)
 
+
 def pages(paginator: Paginator):
     btns = dict()
     if paginator.has_previous():
@@ -22,6 +23,12 @@ def pages(paginator: Paginator):
 
     if paginator.has_next():
         btns["След. ▶"] = "next"
+
+    if paginator.has_previous_10():
+        btns["⏪ -10"] = "previous_10"
+
+    if paginator.has_next_10():
+        btns["+10 ⏩"] = "next_10"
 
     return btns
 
@@ -39,10 +46,9 @@ async def f_catalog(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    categories = redis_db.get_categories_list()
+    categories = None
     if categories is None:
         categories = await orm_get_categories(session)
-        redis_db.set_categories_list(categories)
 
     kbds = get_user_catalog_btns(level=level, categories=categories)
 
@@ -53,11 +59,10 @@ async def f_sub_catalog(session, level, category, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
-    sub_categories = redis_db.get_sub_categories_list_user(category)
+    sub_categories = None
 
     if sub_categories is None:
         sub_categories = await orm_get_sub_categories_user(session, category)
-        redis_db.set_sub_categories_list_user(sub_categories, category)
 
     kbds = get_user_sub_catalog_btns(level=level, category=category, sub_categories=sub_categories)
 
@@ -65,10 +70,9 @@ async def f_sub_catalog(session, level, category, menu_name):
 
 
 async def f_items(session, level, category, sub_category, page):
-    items = redis_db.get_items_list(sub_category)
+    items = None
     if items is None:
         items = await orm_get_items(session, int(sub_category))
-        redis_db.set_items_list(items, sub_category)
 
     if not items:
         banner = await orm_get_banner(session, "media")

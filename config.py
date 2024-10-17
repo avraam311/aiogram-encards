@@ -10,7 +10,7 @@ class Config:
         self.telegram_api_token: str = os.getenv('TELEGRAM_API_TOKEN')
         self.telegram_admin_id: int = int(os.getenv('TELEGRAM_ADMIN_ID'))
         self.payments_token: str = os.getenv('PAYMENTS_TOKEN')
-        self.psql_url: str = os.getenv('{PSQL_URL}')
+        self.psql_url: str = os.getenv('PSQL_URL')
         self.redis_host: str = os.getenv('REDIS_HOST')
         self.redis_port: int = int(os.getenv('REDIS_PORT'))
 
