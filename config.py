@@ -11,6 +11,8 @@ class Config:
         self.telegram_admin_id: int = int(os.getenv('TELEGRAM_ADMIN_ID'))
         self.payments_token: str = os.getenv('PAYMENTS_TOKEN')
         self.psql_url: str = os.getenv('PSQL_URL')
+        self.redis_username: str = os.getenv('REDIS_USERNAME')
+        self.redis_password: str = os.getenv('REDIS_PASSWORD')
         self.redis_host: str = os.getenv('REDIS_HOST')
         self.redis_port: int = int(os.getenv('REDIS_PORT'))
 
@@ -23,6 +25,10 @@ class Config:
             raise ValueError("PAYMENTS_TOKEN не установлен")
         if not self.psql_url:
             raise ValueError("PSQL_URL не установлен")
+        if not self.redis_username:
+            raise ValueError("REDIS_USERNAME не установлен")
+        if not self.redis_password:
+            raise ValueError("REDIS_PASSWORD не установлен")
         if not self.redis_host:
             raise ValueError("REDIS_HOST не установлен")
         if not self.redis_port:
