@@ -14,7 +14,7 @@ import config
 config = config.Config()
 
 redis_db = Cache(username=config.redis_username, password=config.redis_password,
-                 host=config.redis_host, port=config.redis_port, db=0)
+                 host=config.redis_host, port=config.redis_port, db=config.redis_db)
 
 
 def pages(paginator: Paginator):

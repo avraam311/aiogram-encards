@@ -6,8 +6,12 @@ services:
       - .env
     ports:
       - "8000:8000"
+    volumes:
+      - ./database/migrations/versions:/app/migrations/versions
     depends_on:
       - redis
+    networks:
+      - my-network
 
   psql:
     image: postgres:latest
@@ -18,6 +22,8 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - my-network
 
   redis:
     image: redis:latest
@@ -31,9 +37,15 @@ services:
       - ./redis-data:/data
     depends_on:
       - psql
+    networks:
+      - my-network
 
 volumes:
   psql-data:
     driver: local
   redis-data:
     driver: local
+
+networks:
+  my-network:
+    driver: bridge
