@@ -4,7 +4,8 @@ import json
 
 class Cache:
     def __init__(self, username: str, password: str, host: str, port: int, db: int):
-        self.r = redis.Redis(host=host, port=port, db=db,
+        self.r = redis.Redis(username=username, password=password,
+                             host=host, port=port, db=db,
                              decode_responses=True)
 
     def set_categories_list(self, categories_list):
