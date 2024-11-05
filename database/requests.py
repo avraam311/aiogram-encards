@@ -68,6 +68,14 @@ async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict)
     await session.commit()
 
 
+async def orm_add_sub_category(session: AsyncSession, data: dict):
+    obj = Item(
+        name=data["sub_category"],
+    )
+    session.add(obj)
+    await session.commit()
+
+
 async def orm_get_sub_categories_user(session: AsyncSession, category_id):
     query = select(SubCategory).where(SubCategory.category_id == int(category_id))
     result = await session.execute(query)
@@ -87,6 +95,25 @@ async def orm_get_sub_categories_admin(session: AsyncSession):
         sub_categories.append(category)
     return sub_categories
 
+
+async def orm_get_sub_category(session: AsyncSession, sub_category_id: int):
+    query = select(SubCategory).where(SubCategory.id == sub_category_id)
+    result = await session.execute(query)
+    return result.scalar()
+
+
+async def orm_update_sub_category(session: AsyncSession, sub_category_id: int, data: dict):
+    query = update(SubCategory).where(SubCategory.id == sub_category_id).values(
+        name=data["sub_category"],
+    )
+    await session.execute(query)
+    await session.commit()
+
+
+async def orm_delete_sub_category(session: AsyncSession, sub_category_id: int):
+    query = delete(SubCategory).where(SubCategory.id == sub_category_id)
+    await session.execute(query)
+    await session.commit()
 ########################################################
 
 

@@ -26,7 +26,7 @@ dp = Dispatcher()
 dp.include_routers(user_router, admin_router, payment_router)
 
 
-async def on_startup(bot):
+async def on_startup():
 
     run_param = False
     if run_param:
@@ -35,7 +35,7 @@ async def on_startup(bot):
     await create_db()
 
 
-async def on_shutdown(bot):
+async def on_shutdown():
     pass
 
 

@@ -73,10 +73,7 @@ async def f_sub_catalog(session, level, category, menu_name):
 
 
 async def f_items(session, level, category, sub_category, page):
-    items = redis_db.get_items_list(sub_category)
-    if items is None:
-        items = await orm_get_items(session, int(sub_category))
-        redis_db.set_items_list(items, sub_category)
+    items = await orm_get_items(session, int(sub_category))
 
     if not items:
         banner = await orm_get_banner(session, "media")
@@ -107,7 +104,7 @@ async def f_items(session, level, category, sub_category, page):
         media = input_media_photo_or_video(
             media=item[1],
             caption=f"<strong>{item[2]}</strong>\n\n"
-                    f"<strong>{paginator.page} из {paginator.pages}</strong>",
+            f"<strong>{paginator.page} из {paginator.pages}</strong>",
             )
 
         pagination_btns = pages(paginator)
