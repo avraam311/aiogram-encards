@@ -35,7 +35,14 @@ def pages(paginator: Paginator):
 
 
 async def main_menu(session, level, menu_name):
-    banner = await orm_get_banner(session, menu_name)
+    banner = redis_db.get_banner(menu_name)
+    if not banner:
+        banner = await orm_get_banner(session, menu_name)
+        banner_for_redis = list()
+        banner_for_redis.append(banner.image)
+        banner_for_redis.append(banner.description)
+        banner_for_redis = 'banner'.join(banner_for_redis)
+        redis_db.set_banner(menu_name, banner_for_redis)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
     kbds = get_user_main_btns(level=level)
@@ -44,7 +51,14 @@ async def main_menu(session, level, menu_name):
 
 
 async def f_catalog(session, level, menu_name):
-    banner = await orm_get_banner(session, menu_name)
+    banner = redis_db.get_banner(menu_name)
+    if not banner:
+        banner = await orm_get_banner(session, menu_name)
+        banner_for_redis = list()
+        banner_for_redis.append(banner.image)
+        banner_for_redis.append(banner.description)
+        banner_for_redis = 'banner'.join(banner_for_redis)
+        redis_db.set_banner(menu_name, banner_for_redis)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
     categories = redis_db.get_categories_list()
@@ -58,7 +72,14 @@ async def f_catalog(session, level, menu_name):
 
 
 async def f_sub_catalog(session, level, category, menu_name):
-    banner = await orm_get_banner(session, menu_name)
+    banner = redis_db.get_banner(menu_name)
+    if not banner:
+        banner = await orm_get_banner(session, menu_name)
+        banner_for_redis = list()
+        banner_for_redis.append(banner.image)
+        banner_for_redis.append(banner.description)
+        banner_for_redis = 'banner'.join(banner_for_redis)
+        redis_db.set_banner(menu_name, banner_for_redis)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
 
     sub_categories = redis_db.get_sub_categories_list_user(category)
@@ -76,7 +97,14 @@ async def f_items(session, level, category, sub_category, page):
     items = await orm_get_items(session, int(sub_category))
 
     if not items:
-        banner = await orm_get_banner(session, "media")
+        banner = redis_db.get_banner("media")
+        if not banner:
+            banner = await orm_get_banner(session, "media")
+            banner_for_redis = list()
+            banner_for_redis.append(banner.image)
+            banner_for_redis.append(banner.description)
+            banner_for_redis = 'banner'.join(banner_for_redis)
+            redis_db.set_banner("media", banner_for_redis)
         media = InputMediaPhoto(
             media=banner.image, caption=banner.description
         )

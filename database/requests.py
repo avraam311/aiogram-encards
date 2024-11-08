@@ -5,7 +5,7 @@ import time
 from database.models import Item, Banner, Category, SubCategory, User
 
 
-################### BANNER REQUESTS ####################
+# BANNER REQUESTS ####################
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     # Добавляем новый или изменяем существующий по именам
     # пунктов меню: main, read!, catalog, sub_catalog, spec_pack, media
@@ -36,7 +36,7 @@ async def orm_get_info_pages(session: AsyncSession):
 ########################################################
 
 
-################### CATEGORY REQUESTS ####################
+# CATEGORY REQUESTS ####################
 async def orm_create_categories(session: AsyncSession, categories: list):
     query = select(Category)
     result = await session.execute(query)
@@ -57,7 +57,7 @@ async def orm_get_categories(session: AsyncSession):
 ########################################################
 
 
-################### SUB_CATEGORY REQUESTS ####################
+# SUB_CATEGORY REQUESTS ####################
 async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict):
     query = select(SubCategory)
     result = await session.execute(query)
@@ -69,7 +69,8 @@ async def orm_create_sub_categories(session: AsyncSession, sub_categories: dict)
 
 
 async def orm_add_sub_category(session: AsyncSession, data: dict):
-    obj = Item(
+    obj = SubCategory(
+        category_id=data["category_id"],
         name=data["sub_category"],
     )
     session.add(obj)
@@ -103,7 +104,12 @@ async def orm_get_sub_category(session: AsyncSession, sub_category_id: int):
 
 
 async def orm_update_sub_category(session: AsyncSession, sub_category_id: int, data: dict):
+    gotten_sub_category = (await session.execute(select(SubCategory)
+                                                 .where(SubCategory.id == sub_category_id))).scalar()
+    if gotten_sub_category.name == 'Другое🟢':
+        return
     query = update(SubCategory).where(SubCategory.id == sub_category_id).values(
+        category_id=data["category_id"],
         name=data["sub_category"],
     )
     await session.execute(query)
@@ -111,13 +117,17 @@ async def orm_update_sub_category(session: AsyncSession, sub_category_id: int, d
 
 
 async def orm_delete_sub_category(session: AsyncSession, sub_category_id: int):
+    gotten_sub_category = (await session.execute(select(SubCategory)
+                                                 .where(SubCategory.id == sub_category_id))).scalar()
+    if gotten_sub_category.name == 'Другое🟢':
+        return
     query = delete(SubCategory).where(SubCategory.id == sub_category_id)
     await session.execute(query)
     await session.commit()
 ########################################################
 
 
-################### ITEM REQUESTS ####################
+# ITEM REQUESTS ####################
 async def orm_add_item(session: AsyncSession, data: dict):
     obj = Item(
         item_media=data["item_media"],
@@ -160,7 +170,7 @@ async def orm_delete_item(session: AsyncSession, item_id: int):
 ########################################################
 
 
-################### USER REQUESTS ####################
+# USER REQUESTS ####################
 async def orm_add_user(
     session: AsyncSession,
     user_id: int,

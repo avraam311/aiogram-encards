@@ -11,5 +11,7 @@ middlewares/__pycache__/*
 tests/__pycache__/*
 database/migrations/__pycache__/*
 database/migrations/versions/__pycache__/*
+postgres-data/*
+redis-data/*
 
 images/*

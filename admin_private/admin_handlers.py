@@ -1,3 +1,4 @@
+import sqlalchemy
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -11,7 +12,8 @@ from common.filters import IsAdmin
 from database.requests import (orm_add_item, orm_get_item, orm_get_items, orm_delete_item,
                                orm_update_item, orm_get_info_pages, orm_change_banner_image,
                                orm_get_sub_categories_admin, orm_get_sub_category,
-                               orm_update_sub_category, orm_delete_sub_category, orm_add_sub_category)
+                               orm_update_sub_category, orm_delete_sub_category, orm_add_sub_category,
+                               orm_get_categories, orm_get_banner, orm_get_sub_categories_user)
 from common.get_keyboard_func import get_inline_keyboard
 from cache import Cache
 import config
@@ -58,8 +60,8 @@ async def admin_features(message: Message, session: AsyncSession):
             sub_category[1],
             reply_markup=get_inline_keyboard(
                 btns={
-                    "Удалить🧺": f"delete_{sub_category_id}",
-                    "Изменить✅": f"change_{sub_category_id}",
+                    "Удалить🧺": f"sub_delete_{sub_category_id}",
+                    "Изменить✅": f"sub_change_{sub_category_id}",
                 },
                 sizes=(2,)
             ),
@@ -73,7 +75,7 @@ async def nth(message: Message, state: FSMContext) -> None:
         message.text,
         reply_markup=ReplyKeyboardRemove(),
     )
-    await state.set_state(None)
+    await state.clear()
 
 
 @admin_router.callback_query(F.data.startswith('sub_category_'))
@@ -113,13 +115,22 @@ async def delete_item_callback(callback: CallbackQuery, session: AsyncSession):
     await callback.message.delete()
 
 
-@admin_router.callback_query(F.data.startswith("delete_"))
-async def delete_sub_category_callback(callback: CallbackQuery, session: AsyncSession):
+@admin_router.callback_query(F.data.startswith("sub_delete_"))
+async def sub_delete_category_callback(callback: CallbackQuery, session: AsyncSession):
     sub_category_id = callback.data.split("_")[-1]
-    await orm_delete_sub_category(session, int(sub_category_id))
-
-    await callback.message.answer("Удаление прошло успешно✅")
-    await callback.message.delete()
+    if sub_category_id == '13':
+        await callback.message.answer("Нельзя удалить подкатегорию\"Другое🟢\"!")
+        return
+    try:
+        await orm_delete_sub_category(session, int(sub_category_id))
+        sub_categories = await orm_get_sub_categories_admin(session)
+        redis_db.set_sub_categories_list_admin(sub_categories)
+        redis_db.delete_sub_category_user(sub_category_id)
+        await callback.message.answer("Удаление прошло успешно✅")
+        await callback.message.delete()
+    except sqlalchemy.exc.IntegrityError:
+        await callback.message.answer("Нельзя удалить подкатегорию, в которой есть медиа\n\n"
+                                      "Сначала перенесите медиа в другую подкатегорию❗")
 
 
 # FSM для загрузки/изменения баннеров ############################
@@ -149,6 +160,9 @@ async def add_banner(message: Message, state: FSMContext):
 @admin_router.message(AddItemBanner.image, F.photo)
 async def add_banner(message: Message, state: FSMContext, session: AsyncSession):
     image_id = message.photo[-1].file_id
+    if not message.caption:
+        await message.answer("Отправьте изображение вместе с названием страницы")
+        return
     for_page = message.caption.strip()
     pages_names = [page.name for page in await orm_get_info_pages(session)]
     if for_page not in pages_names:
@@ -156,6 +170,12 @@ async def add_banner(message: Message, state: FSMContext, session: AsyncSession)
                          \n\n{', '.join(pages_names)}")
         return
     await orm_change_banner_image(session, for_page, image_id,)
+    banner = await orm_get_banner(session, for_page)
+    banner_for_redis = list()
+    banner_for_redis.append(banner.image)
+    banner_for_redis.append(banner.description)
+    banner_for_redis = 'banner'.join(banner_for_redis)
+    redis_db.set_banner(for_page, banner_for_redis)
     await message.answer("Баннер добавлен/изменен✅", reply_markup=kb.admin_main)
     await state.clear()
 
@@ -201,7 +221,7 @@ async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session
     await state.set_state(AddItem.item_media)
 
 
-# Становимся в состояние ожидания выбора категории
+# Становимся в состояние ожидания выбора подкатегории
 @admin_router.message(StateFilter(None), F.text == 'Добавить медиа➕')
 async def add_item(message: Message, state: FSMContext, session: AsyncSession):
     await message.answer(
@@ -240,7 +260,9 @@ async def cancel(message: Message, state: FSMContext) -> None:
 async def back_step(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
 
-    if isinstance(AddItem.sub_category_filter, int) and current_state == AddItem.item_media:
+    if (isinstance(AddItem.sub_category_filter, int) and current_state == AddItem.item_media)\
+            or (current_state == AddSubCategory.category)\
+            or (current_state == AddItem.sub_category):
         await message.answer("Нет шага назад, выполните текущий шаг или нажмите \"Отмена\"❌.",
                              reply_markup=kb.admin_cancel)
         return
@@ -250,9 +272,9 @@ async def back_step(message: Message, state: FSMContext) -> None:
         await message.answer("Выберите подкатегорию снова⏫")
         return
 
-    elif current_state == AddItem.sub_category:
-        await message.answer("Нет шага назад, выполните текущий шаг или нажмите \"Отмена\"❌.",
-                             reply_markup=kb.admin_cancel)
+    elif current_state == AddSubCategory.sub_category:
+        await state.set_state(AddSubCategory.category)
+        await message.answer("Выберите категорию снова⏫")
         return
 
     previous = None
@@ -391,8 +413,9 @@ async def add_media_text(message: Message, state: FSMContext, session: AsyncSess
         await state.clear()
         
     except Exception as e:
-        await message.answer(f"Ошибка добавления медиа: \n\n{e}❗",
+        await message.answer(f"Ошибка добавления медиа❗",
                              reply_markup=kb.admin_main)
+
         print(e)
         await state.clear()
 
@@ -410,32 +433,46 @@ async def error(message: Message) -> None:
 # FSM для дабавления/изменения подкатегорий админом ###################
 
 class AddSubCategory(StatesGroup):
+    category = State()
     sub_category = State()
 
     sub_category_for_change = None
 
 
-@admin_router.callback_query(StateFilter(None), F.data.startswith("change_"))
+@admin_router.callback_query(StateFilter(None), F.data.startswith("sub_change_"))
 async def edit_sub_category_callback(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     sub_category_id = callback.data.split("_")[-1]
+    if sub_category_id == '13':
+        await callback.message.answer("Нельзя изменить подкатегорию\"Другое🟢\"!")
+        return
 
     sub_category_for_change = await orm_get_sub_category(session, int(sub_category_id))
 
-    AddItem.sub_category_for_change = sub_category_for_change
+    AddSubCategory.sub_category_for_change = sub_category_for_change
 
     await callback.message.answer(f'Отправьте название подкатегории🖊',
                                   reply_markup=kb.admin_cancel)
 
-    await state.set_state(AddItem.sub_category)
+    await state.set_state(AddSubCategory.sub_category)
 
 
-# Становимся в состояние ожидания названия подкатегории
+# Становимся в состояние ожидания выбора категории
 @admin_router.message(StateFilter(None), F.text == 'Добавить подкатегорию➕')
 async def add_sub_category(message: Message, state: FSMContext, session: AsyncSession):
-    await message.answer(message.text,
-                         reply_markup=kb.admin_cancel)
+    await message.answer(
+        'Выберите...',
+        reply_markup=kb.admin_cancel,
+    )
+    categories = redis_db.get_categories_list()
 
-    await state.set_state(AddItem.sub_category)
+    if categories is None:
+        categories = await orm_get_categories(session)
+        redis_db.set_categories_list(categories)
+
+    btns = {category[1]: 'category_'+str(category[0]) for category in categories}
+    await message.answer("...категорию⭕",
+                         reply_markup=get_inline_keyboard(btns=btns))
+    await state.set_state(AddSubCategory.category)
 
 
 # Хендлер отмены состояния должен быть всегда именно здесь,
@@ -453,30 +490,74 @@ async def cancel(message: Message, state: FSMContext) -> None:
     await message.answer("Действия отменены✅", reply_markup=kb.admin_main)
 
 
-@admin_router.message(AddItem.sub_category, F.text)
+@admin_router.callback_query(AddSubCategory.category)
+async def category_choice(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    categories = redis_db.get_categories_list()
+
+    if categories is None:
+        categories = await orm_get_categories(session)
+        redis_db.set_categories_list(categories)
+
+    category_id = int(callback.data.split('_')[-1])
+
+    if int(category_id) in [category[0] for category in categories]:
+        await callback.answer()
+        await state.update_data(category_id=category_id)
+        await callback.message.answer(f'Отправьте название подкатегории🖊',
+                                      reply_markup=kb.admin_back_cancel)
+    else:
+        await callback.message.answer('Выберите категорию из кнопок⏫')
+        await callback.answer()
+    await state.set_state(AddSubCategory.sub_category)
+
+
+@admin_router.message(AddSubCategory.category)
+async def error(message: Message):
+    await message.answer('Следуйте инструкциям❗')
+
+
+@admin_router.message(AddSubCategory.sub_category, F.text)
 async def add_sub_category(message: Message, state: FSMContext, session: AsyncSession) -> None:
-    if message.text == "." and AddSubCategory.sub_category_for_change:
-        await state.update_data(sub_category=AddSubCategory.sub_category_for_change.sub_category)
+    if AddSubCategory.sub_category_for_change and message.text != '.':
+        await state.update_data(category_id=AddSubCategory.sub_category_for_change.category_id)
+        await state.update_data(sub_category=message.text)
+    elif AddSubCategory.sub_category_for_change and message.text == '.':
+        await state.update_data(category_id=AddSubCategory.sub_category_for_change.category_id)
+        await state.update_data(sub_category=AddSubCategory.sub_category_for_change.name)
     else:
         await state.update_data(sub_category=message.text)
     data = await state.get_data()
     try:
         if AddSubCategory.sub_category_for_change:
             await orm_update_sub_category(session, AddSubCategory.sub_category_for_change.id, data)
+            sub_categories = await orm_get_sub_categories_admin(session)
+            redis_db.set_sub_categories_list_admin(sub_categories)
+            sub_categories = await orm_get_sub_categories_user(session,
+                                                               str(AddSubCategory.sub_category_for_change.category_id),)
+            redis_db.set_sub_categories_list_user(sub_categories,
+                                                  str(AddSubCategory.sub_category_for_change.category_id))
             await message.answer("Подкатегория изменена✅", reply_markup=kb.admin_main)
         else:
             await orm_add_sub_category(session, data)
+            sub_categories = await orm_get_sub_categories_admin(session)
+            redis_db.set_sub_categories_list_admin(sub_categories)
+            sub_categories = await orm_get_sub_categories_user(session,
+                                                               data["category_id"],)
+            redis_db.set_sub_categories_list_user(sub_categories,
+                                                  data["category_id"],)
             await message.answer("Подкатегория добавлена✅", reply_markup=kb.admin_main)
 
         await state.clear()
 
     except Exception as e:
-        await message.answer(f"Ошибка добавления подкатегории: \n\n{e}❗",
+        await message.answer(f"Ошибка добавления подкатегории❗",
                              reply_markup=kb.admin_main)
+        await message.answer(str(e))
+        await message.answer(str(e))
         print(e)
         await state.clear()
 
-    AddItem.sub_category_for_change = None
+    AddSubCategory.sub_category_for_change = None
 
 
 @admin_router.message(AddSubCategory.sub_category)
