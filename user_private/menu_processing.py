@@ -121,7 +121,7 @@ async def f_items(session, level, category, sub_category, page):
     else:
         items_len = len(items)
 
-        if int(sub_category) in [2, 7]:
+        if int(sub_category) in [2]:
             input_media_photo_or_video = InputMediaVideo
         else:
             input_media_photo_or_video = InputMediaPhoto

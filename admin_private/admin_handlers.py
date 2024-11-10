@@ -80,7 +80,7 @@ async def nth(message: Message, state: FSMContext) -> None:
 
 @admin_router.callback_query(F.data.startswith('sub_category_'))
 async def starring_at_item(callback: CallbackQuery, session: AsyncSession):
-    if int(callback.data.split('_')[-1]) in [2, 7]:
+    if int(callback.data.split('_')[-1]) in [2]:
         answer_photo_or_video = callback.message.answer_video
     else:
         answer_photo_or_video = callback.message.answer_photo
@@ -215,7 +215,7 @@ async def edit_item_callback(callback: CallbackQuery, state: FSMContext, session
     AddItem.item_for_change = item_for_change
     AddItem.sub_category_filter = item_for_change.sub_category_id
 
-    await callback.message.answer((f'Отправьте изображение📷' if AddItem.sub_category_filter not in [2, 7]
+    await callback.message.answer((f'Отправьте изображение📷' if AddItem.sub_category_filter not in [2]
                                    else 'Отправьте видео🎥'), reply_markup=kb.admin_cancel)
 
     await state.set_state(AddItem.item_media)
@@ -289,7 +289,7 @@ async def back_step(message: Message, state: FSMContext) -> None:
 @admin_router.callback_query(AddItem.sub_category)
 async def sub_category_choice(callback: CallbackQuery, state: FSMContext,
                               session: AsyncSession):
-    if int(callback.data) in [2, 7]:
+    if int(callback.data) in [2]:
         AddItem.sub_category_filter = 'video'
     else:
         AddItem.sub_category_filter = 'photo'
